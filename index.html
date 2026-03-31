@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.1</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.2</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1382,7 +1382,10 @@ function renderHistory() {
     el.className = 'history-item' + (state.activeAuction?.id === h.id ? ' active' : '');
     el.onclick = () => { loadAuction(h.id); toggleHistoryMenu(); };
     el.innerHTML = `
-      <div class="history-title">${h.title || 'Bez tytułu'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div class="history-title" style="flex:1;">${h.title || 'Bez tytułu'}</div>
+        <button onclick="event.stopPropagation();deleteAuction('${h.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0 4px;opacity:.5;" title="Usuń aukcję">✕</button>
+      </div>
       <div class="history-meta">
         ${client ? `<span class="history-client ${badgeClass}" style="padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:9px;">${client.initials||client.name}</span>` : ''}
         <span>${formatDate(h.updatedAt)}</span>
@@ -1391,6 +1394,26 @@ function renderHistory() {
     `;
     list.appendChild(el);
   });
+}
+
+async function deleteAuction(id) {
+  if (!confirm('Usunąć tę aukcję?')) return;
+  setSyncState('syncing');
+  try {
+    await auctionsCol().doc(id).delete();
+    if (state.activeAuction?.id === id) {
+      state.activeAuction = null;
+      state.sections = [];
+      renderSections();
+      clearPreview();
+      document.getElementById('toolbarLabel').textContent = 'Nowa aukcja';
+    }
+    setSyncState('synced');
+    toast('Aukcja usunięta', 'success');
+  } catch(e) {
+    setSyncState('error');
+    toast('Błąd usuwania: ' + e.message, 'error');
+  }
 }
 
 function toggleHistoryMenu() {
@@ -1410,7 +1433,7 @@ document.addEventListener('click', e => {
 function formatDate(ts) {
   if (!ts) return '';
   const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit' });
+  return d.toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour:'2-digit', minute:'2-digit' });
 }
 
 function loadAuction(id) {
