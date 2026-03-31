@@ -1844,8 +1844,8 @@ function renderSections() {
     list.appendChild(createSectionCard(sec, idx));
   });
 
-  // Restore scroll position
-  requestAnimationFrame(() => { list.scrollTop = scrollTop; });
+  // Restore scroll position + auto-resize textareas
+  requestAnimationFrame(() => { list.scrollTop = scrollTop; autoResizeAllTextareas(); });
 }
 
 function createSectionCard(section, idx) {
@@ -1918,6 +1918,20 @@ function updateSectionField(id, field, value) {
   s[field] = value;
   refreshPreview();
 }
+
+// Auto-resize all textareas to fit content
+function autoResizeAllTextareas() {
+  document.querySelectorAll('.section-content-input').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+}
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('section-content-input')) {
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
+  }
+});
 
 // ── SECTION ACTIONS ──
 function changeSectionType(id, type) {
