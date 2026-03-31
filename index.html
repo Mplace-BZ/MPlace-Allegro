@@ -781,7 +781,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.2</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.3</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1764,6 +1764,7 @@ function renderSections() {
   state.sections.forEach((sec, idx) => {
     list.appendChild(createSectionCard(sec, idx));
   });
+  setTimeout(autoResizeTextareas, 50);
 }
 
 function createSectionCard(section, idx) {
@@ -1833,6 +1834,22 @@ function updateSectionField(id, field, value) {
   if (!s || s[field] === value) return;
   s[field] = value;
   refreshPreview();
+}
+
+// Auto-resize textareas to fit content
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('section-content-input')) {
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
+  }
+});
+
+// Initial auto-resize on render
+function autoResizeTextareas() {
+  document.querySelectorAll('.section-content-input').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(80, ta.scrollHeight) + 'px';
+  });
 }
 
 // ── SECTION ACTIONS ──
