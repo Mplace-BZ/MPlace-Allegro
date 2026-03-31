@@ -534,33 +534,34 @@ select.input-field { cursor: pointer; }
 .section-col + .section-col { border-left: 1px solid var(--border); }
 .col-label { font-size: 9px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
 .section-heading-input {
+  display: block;
   width: 100%;
-  background: var(--bg3);
-  border: 1px solid var(--border);
+  background: #1a1f2e;
+  border: 1px solid rgba(255,255,255,.15);
   border-radius: var(--radius);
-  color: var(--text);
+  color: #e8eaf0;
   font-family: var(--sans);
   font-size: 12px;
   font-weight: 600;
-  padding: 5px 8px;
-  margin-bottom: 4px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
   outline: none;
   transition: border-color 0.15s;
 }
 .section-heading-input:hover { border-color: var(--border2); }
 .section-heading-input:focus { border-color: var(--accent); background: var(--bg3); }
 .section-content-input {
+  display: block;
   width: 100%;
   min-height: 200px;
-  flex: 1;
-  background: var(--bg3);
-  border: 1px solid var(--border);
+  background: #1a1f2e;
+  border: 1px solid rgba(255,255,255,.15);
   border-radius: var(--radius);
-  color: var(--text);
+  color: #e8eaf0;
   font-family: var(--mono);
   font-size: 11px;
   line-height: 1.6;
-  padding: 6px 8px;
+  padding: 8px 10px;
   resize: vertical;
   outline: none;
   transition: border-color 0.15s;
@@ -781,7 +782,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.4</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.5</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1452,12 +1453,14 @@ function toggleHistoryMenu() {
   document.getElementById('historyMenu').classList.toggle('open');
 }
 
-// Close history menu on outside click
-document.addEventListener('mousedown', e => {
-  const dd = document.querySelector('.history-dropdown');
-  if (dd && !dd.contains(e.target)) {
-    document.getElementById('historyMenu')?.classList.remove('open');
-  }
+// Close history menu on outside click (delayed to allow item click)
+document.addEventListener('click', e => {
+  setTimeout(() => {
+    const dd = document.querySelector('.history-dropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('historyMenu')?.classList.remove('open');
+    }
+  }, 100);
 });
 
 function formatDate(ts) {
