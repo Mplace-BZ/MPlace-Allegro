@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.9</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.0</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1692,22 +1692,41 @@ KRYTYCZNE ZASADY JSON:
     try {
       result = JSON.parse(jsonStr);
     } catch(parseErr) {
-      // Regex fallback — extract sections even from broken JSON
-      console.warn('JSON parse failed, using regex extraction');
+      // Regex fallback — extract sections from broken JSON
+      console.warn('JSON parse failed, using fallback extraction');
       const sections = [];
-      // Match each section object — find "type":"VALUE" and "heading":"VALUE" and "content":"VALUE"
-      const blocks = jsonStr.split(/\}\s*,\s*\{/);
-      blocks.forEach(block => {
-        const typeM = block.match(/"type"\s*:\s*"([^"]+)"/);
-        const headM = block.match(/"heading"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        const contM = block.match(/"content"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (typeM) {
-          sections.push({
-            type: typeM[1],
-            heading: (headM ? headM[1] : '').replace(/\\n/g,'\n').replace(/\\"/g,'"'),
-            content: (contM ? contM[1] : '').replace(/\\n/g,'\n').replace(/\\"/g,'"')
-          });
+      // Find all "type" occurrences and extract sections between them
+      const typePositions = [];
+      const typeRe = /"type"\s*:\s*"(TEXT_ONLY|IMAGE_ONLY|IMAGE_LEFT_TEXT_RIGHT|TEXT_LEFT_IMAGE_RIGHT|IMAGE_IMAGE)"/g;
+      let tm;
+      while ((tm = typeRe.exec(jsonStr)) !== null) {
+        typePositions.push({ pos: tm.index, type: tm[1] });
+      }
+      typePositions.forEach((tp, i) => {
+        const end = i < typePositions.length - 1 ? typePositions[i+1].pos : jsonStr.length;
+        const chunk = jsonStr.substring(tp.pos, end);
+        // Extract heading
+        const hm = chunk.match(/"heading"\s*:\s*"([^"]*?)"/);
+        // Extract content — grab everything between "content":" and the last "
+        const ci = chunk.indexOf('"content"');
+        let content = '';
+        if (ci >= 0) {
+          const valStart = chunk.indexOf('"', ci + 9 + chunk.substring(ci+9).indexOf(':') + 1) + 1;
+          // Find content end — look for "} or ", which ends the value
+          let valEnd = -1;
+          // Walk backwards from end of chunk to find closing quote
+          for (let j = chunk.length - 1; j > valStart; j--) {
+            if (chunk[j] === '"' && chunk[j-1] !== '\\') { valEnd = j; break; }
+          }
+          if (valEnd > valStart) {
+            content = chunk.substring(valStart, valEnd);
+          }
         }
+        sections.push({
+          type: tp.type,
+          heading: hm ? hm[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : '',
+          content: content.replace(/\\n/g,'\n').replace(/\\"/g,'"').replace(/\\t/g,'\t')
+        });
       });
       if (sections.length === 0) {
         toast('Błąd parsowania — spróbuj ponownie', 'error');
