@@ -781,7 +781,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.8</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.9</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1149,24 +1149,16 @@ function updateTemplateUI() {
   document.getElementById('templateBtn').style.display = state.activeClient ? 'inline-flex' : 'none';
 }
 
-async function saveTemplate() {
+function saveTemplate() {
   if (!state.activeClient || state.sections.length === 0) return;
-  const template = state.sections.map(s => ({
+  // Open template editor pre-filled with current sections
+  document.getElementById('templateClientName').textContent = state.activeClient.name;
+  editingTemplate = state.sections.map(s => ({
     type: s.type,
     heading: s.heading || '',
   }));
-  setSyncState('syncing');
-  try {
-    await clientsCol().doc(state.activeClient.id).update({ template });
-    state.activeClient.template = template;
-    const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
-    if (idx >= 0) state.clients[idx].template = template;
-    setSyncState('synced');
-    toast(`Szablon zapisany (${template.length} sekcji)`, 'success');
-  } catch(e) {
-    setSyncState('error');
-    toast('Błąd zapisu szablonu: ' + e.message, 'error');
-  }
+  renderTemplateEditor();
+  openModal('templateModal');
 }
 
 function openTemplateModal() {
