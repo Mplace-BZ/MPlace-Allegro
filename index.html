@@ -1828,8 +1828,7 @@ function renderSections() {
   const list  = document.getElementById('sectionsList');
   const empty = document.getElementById('emptySections');
   const count = document.getElementById('sectionCount');
-  const scrollParent = list.closest('.sections-list') || list.parentElement;
-  const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
+  const scrollTop = list.scrollTop;
 
   count.textContent = state.sections.length + ' sekcji';
 
@@ -1846,7 +1845,7 @@ function renderSections() {
   });
 
   // Restore scroll position
-  if (scrollParent) requestAnimationFrame(() => { scrollParent.scrollTop = scrollTop; });
+  requestAnimationFrame(() => { list.scrollTop = scrollTop; });
 }
 
 function createSectionCard(section, idx) {
@@ -2193,9 +2192,15 @@ function formatText(t) {
 function refreshPreview() {
   if (state.sections.length === 0) { clearPreview(); return; }
   const html = generateAllegroHTML();
-  const encoded = html.replace(/"/g,'&quot;');
-  document.getElementById('previewFrame').innerHTML =
-    `<iframe srcdoc="${encoded}" style="width:100%;height:100%;border:none;"></iframe>`;
+  const frame = document.getElementById('previewFrame');
+  let iframe = frame.querySelector('iframe');
+  if (!iframe) {
+    frame.innerHTML = '';
+    iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;height:100%;border:none;';
+    frame.appendChild(iframe);
+  }
+  iframe.srcdoc = html;
 }
 
 function clearPreview() {
