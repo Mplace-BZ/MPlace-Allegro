@@ -740,7 +740,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.4</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.5</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1104,6 +1104,10 @@ function openGuidelines() {
 function getDefaultGuidelines(brandName) {
   return `=== WYTYCZNE MARKI: ${brandName} ===
 
+── ZASADA NADRZĘDNA ──
+Treści merytoryczne (składniki, dawkowanie, oświadczenia zdrowotne, przeciwwskazania)
+przepisuj DOSŁOWNIE z tekstu źródłowego. NIGDY nie wymyślaj od siebie.
+
 ── FORMATOWANIE ──
 Nagłówki H2: KAPITALIKAMI
 Emoji dla nagłówków: ✅
@@ -1394,17 +1398,51 @@ ZASADY STOSOWANIA WYTYCZNYCH:
 - Zachowaj kolejność sekcji z wytycznych`;
   }
 
-  const systemPrompt = `Jesteś ekspertem od tworzenia aukcji Allegro. Analizujesz treść produktu i dzielisz ją na sekcje.
+  const systemPrompt = `Jesteś ekspertem od układu i copywritingu aukcji Allegro.
 
-Dostępne typy sekcji:
+════════════════════════════════════════════════
+ABSOLUTNA ZASADA #1 — WIERNOŚĆ TREŚCI ŹRÓDŁOWEJ
+════════════════════════════════════════════════
+To są produkty medyczne/zdrowotne. NIGDY nie wymyślaj, nie dodawaj, nie parafrazuj treści merytorycznych.
+
+MUSISZ:
+- Używać WYŁĄCZNIE informacji z wklejonego tekstu źródłowego
+- Składniki, dawkowanie, sposób użycia, oświadczenia zdrowotne — przepisuj DOSŁOWNIE
+- Zachować wszystkie gwiazdki (*), zastrzeżenia prawne, odniesienia do EFSA
+- Każda informacja merytoryczna musi pochodzić z tekstu źródłowego — ZERO inwencji
+
+NIE WOLNO CI:
+- Wymyślać korzyści zdrowotnych, których nie ma w tekście
+- Dodawać oświadczeń medycznych od siebie
+- Parafrazować składu, dawkowania, przeciwwskazań
+- Zmieniać liczb, jednostek, nazw składników
+
+Twoja rola to TYLKO:
+- Organizacja treści w sekcje aukcji Allegro
+- Copywriting nagłówków i wprowadzeń (ale NIE treści merytorycznych)
+- Formatowanie zgodne z wytycznymi marki (emoji, pogrubienia, układ)
+- Usuwanie duplikatów i szumu (np. powtórzone nazwy produktu, parametry Allegro)
+
+════════════════════════════════════════════════
+EMOJI
+════════════════════════════════════════════════
+- USUŃ wszystkie emoji z tekstu źródłowego (🌿 📌 ⚡ 💊 🧪 itp.)
+- Stosuj WYŁĄCZNIE emoji zdefiniowane w wytycznych marki (Wiki)
+- Jeśli brak wytycznych — nie używaj żadnych emoji
+
+════════════════════════════════════════════════
+TYPY SEKCJI
+════════════════════════════════════════════════
 - TEXT_ONLY: Tylko tekst
 - IMAGE_ONLY: Tylko zdjęcie
 - IMAGE_LEFT_TEXT_RIGHT: Zdjęcie po lewej, tekst po prawej
 - TEXT_LEFT_IMAGE_RIGHT: Tekst po lewej, zdjęcie po prawej
 - IMAGE_IMAGE: Dwa zdjęcia obok siebie
 
-Zasady ogólne:
-1. WAŻNE: Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj
+════════════════════════════════════════════════
+ZASADY OGÓLNE
+════════════════════════════════════════════════
+1. Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj
 2. Sekcje z korzyściami: IMAGE_LEFT_TEXT_RIGHT lub TEXT_LEFT_IMAGE_RIGHT (naprzemiennie)
 3. Minimum 6 sekcji
 ${guidelinesBlock}
@@ -1413,7 +1451,10 @@ Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy).
 WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wartości jako \\", nowe linie jako \\n.
 {"sections":[{"type":"TEXT_ONLY","heading":"Nagłówek","content":"Treść"}]}`;
 
-  const userPrompt = `Podziel na sekcje aukcji Allegro:\n\n${text}`;
+  // Strip emoji from source text before sending to AI
+  const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}]/gu, '').replace(/  +/g, ' ');
+
+  const userPrompt = `Podziel na sekcje aukcji Allegro:\n\n${cleanText}`;
 
   try {
     const response = await fetch(WORKER_URL, {
