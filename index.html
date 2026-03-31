@@ -1828,6 +1828,8 @@ function renderSections() {
   const list  = document.getElementById('sectionsList');
   const empty = document.getElementById('emptySections');
   const count = document.getElementById('sectionCount');
+  const scrollParent = list.closest('.sections-list') || list.parentElement;
+  const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
 
   count.textContent = state.sections.length + ' sekcji';
 
@@ -1842,6 +1844,9 @@ function renderSections() {
   state.sections.forEach((sec, idx) => {
     list.appendChild(createSectionCard(sec, idx));
   });
+
+  // Restore scroll position
+  if (scrollParent) requestAnimationFrame(() => { scrollParent.scrollTop = scrollTop; });
 }
 
 function createSectionCard(section, idx) {
