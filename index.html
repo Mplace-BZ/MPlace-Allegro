@@ -2091,7 +2091,14 @@ async function callAIForSection(sectionId, prompt, statusMsg) {
     if (result.heading !== undefined) s.heading = (result.heading||'').replace(/\\n/g, '\n');
     if (result.content) s.content = (result.content||'').replace(/\\n/g, '\n');
 
-    renderSections();
+    // Update only this section's DOM — no full re-render
+    const body = document.getElementById('body_' + sectionId);
+    if (body) body.innerHTML = renderSectionBody(s);
+    const headingInput = body?.querySelector('.section-heading-input');
+    if (headingInput) headingInput.value = s.heading || '';
+    // Auto-resize the updated textarea
+    const ta = body?.querySelector('.section-content-input');
+    if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
     refreshPreview();
     setStatus('', 'Gotowy');
 
