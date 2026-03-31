@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPlace — Generator Aukcji Allegro</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg:      #0f1117;
+  --bg2:     #181c26;
+  --bg3:     #1e2333;
+  --border:  rgba(255,255,255,.07);
+  --border2: rgba(255,255,255,.13);
+  --text:    #e8eaf0;
+  --text2:   #8b91a8;
+  --text3:   #4a5068;
+  --accent:  #ff6b35;
+  --accent2: #ff8c5a;
+  --green:      #2dd4a0;  --green-bg:  rgba(45,212,160,.07);  --green-bd:  rgba(45,212,160,.22);
+  --red:        #ff4d6a;  --red-bg:    rgba(255,77,106,.07);   --red-bd:    rgba(255,77,106,.22);
+  --yellow:     #f5a623;  --yellow-bg: rgba(245,166,35,.07);   --yellow-bd: rgba(245,166,35,.22);
+  --blue:       #4d9fff;  --blue-bg:   rgba(77,159,255,.07);   --blue-bd:   rgba(77,159,255,.22);
+  --g-meble:  #ff6b35;
+  --g-luxsen: #2dd4a0;
+  --g-one:    #b47fff;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --radius: 8px;
+  --radius2: 12px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  flex-direction: column;
+  gap: 0;
+}
+.login-card {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 48px 40px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.login-logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.login-logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+.login-title {
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.3;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.6;
+}
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 20px;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.login-btn:hover {
+  background: var(--bg3);
+  border-color: var(--accent);
+  color: var(--accent2);
+}
+.login-btn svg { flex-shrink: 0; }
+.login-error {
+  font-size: 12px;
+  color: var(--red);
+  text-align: center;
+  display: none;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 52px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+.logo {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.logo-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+.logo strong { color: var(--text); font-weight: 600; }
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.user-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  overflow: hidden;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ghost { background: none; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--bg3); color: var(--text); border-color: rgba(255,255,255,.2); }
+.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
+.btn-danger:hover { background: rgba(255,77,106,.15); }
+
+/* ── APP LAYOUT ── */
+.app {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 52px);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-section {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+.client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.client-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.client-item:hover { background: var(--bg3); }
+.client-item.active {
+  background: rgba(255,107,53,.07);
+  border-color: rgba(255,107,53,.25);
+}
+.client-avatar {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.client-item.active .client-avatar {
+  background: rgba(255,107,53,.12);
+  border-color: rgba(255,107,53,.4);
+  color: var(--accent);
+}
+.client-name { font-size: 12px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-count { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  color: var(--text3);
+  font-family: var(--sans);
+  font-size: 11px;
+  padding: 6px 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.15s;
+  margin-top: 6px;
+}
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.history-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.history-item {
+  padding: 8px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.history-item:hover { background: var(--bg3); }
+.history-item.active { background: var(--bg3); border-color: var(--border2); }
+.history-title { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-meta { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; display: flex; gap: 6px; }
+.history-client {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--mono);
+}
+
+.sidebar-footer {
+  padding: 10px 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.toolbar {
+  height: 44px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.toolbar-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  font-family: var(--mono);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sep { width: 1px; height: 18px; background: var(--border2); margin: 0 2px; }
+.toolbar-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+
+/* ── EDITOR AREA ── */
+.editor-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── INPUT PANEL ── */
+.input-panel {
+  width: 380px;
+  min-width: 300px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.panel-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.input-meta {
+  padding: 10px 14px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.input-field {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--text3); }
+select.input-field { cursor: pointer; }
+.textarea-wrap {
+  flex: 1;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+.content-textarea {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 10px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+  min-height: 0;
+}
+.content-textarea:focus { border-color: var(--accent); }
+.content-textarea::placeholder { color: var(--text3); }
+.char-count { font-size: 10px; font-family: var(--mono); color: var(--text3); text-align: right; }
+
+/* ── AI STATUS ── */
+.ai-status {
+  padding: 7px 14px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.status-dot.active { background: var(--green); animation: blink 1s infinite; }
+.status-dot.error { background: var(--red); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── SECTIONS PANEL ── */
+.sections-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  min-width: 0;
+}
+.sections-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.section-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.section-card:hover { border-color: var(--border2); }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.section-num { font-family: var(--mono); font-size: 10px; color: var(--text3); width: 16px; flex-shrink: 0; }
+.section-type-select {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 6px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.section-type-select:focus { border-color: var(--accent); }
+.section-actions { margin-left: auto; display: flex; gap: 2px; }
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+.icon-btn:hover { background: var(--bg); color: var(--text2); }
+.icon-btn.danger:hover { background: var(--red-bg); color: var(--red); }
+.section-body { display: flex; }
+.section-col { flex: 1; padding: 10px; min-height: 60px; }
+.section-col + .section-col { border-left: 1px solid var(--border); }
+.col-label { font-size: 9px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.col-content { font-size: 11px; line-height: 1.6; color: var(--text2); white-space: pre-wrap; }
+.img-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 70px;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  color: var(--text3);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.img-placeholder:hover { border-color: var(--accent); color: var(--accent); }
+.img-uploaded { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border2); }
+.img-uploaded img { width: 100%; display: block; max-height: 140px; object-fit: cover; }
+.img-remove { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.75); border: none; color: white; border-radius: 3px; padding: 2px 5px; font-size: 9px; cursor: pointer; }
+
+/* ── PREVIEW ── */
+.preview-panel {
+  width: 440px;
+  min-width: 320px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.preview-frame {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+}
+.preview-frame iframe { width: 100%; height: 100%; border: none; display: block; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text3);
+  padding: 40px;
+  text-align: center;
+}
+.empty-icon { font-size: 32px; opacity: 0.25; }
+.empty-title { font-size: 13px; font-weight: 600; color: var(--text2); }
+.empty-desc { font-size: 11px; line-height: 1.6; max-width: 260px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius2);
+  padding: 24px;
+  width: 360px;
+  transform: translateY(8px);
+  transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.modal-field { margin-bottom: 10px; }
+.modal-field label { font-size: 11px; color: var(--text2); margin-bottom: 4px; display: block; font-family: var(--mono); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 999; }
+.toast {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 9px 13px;
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slide-in 0.2s ease;
+  max-width: 260px;
+}
+.toast.success { border-color: var(--green-bd); }
+.toast.error { border-color: var(--red-bd); }
+.toast.saving { border-color: var(--yellow-bd); }
+@keyframes slide-in { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── SYNC INDICATOR ── */
+.sync-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background 0.3s;
+}
+.sync-dot.syncing { background: var(--yellow); animation: blink 0.8s infinite; }
+.sync-dot.synced { background: var(--green); }
+.sync-dot.error { background: var(--red); }
+
+/* ── GROUP BADGES ── */
+.g-meble-badge  { background: rgba(255,107,53,.12); color: var(--g-meble);  border: 1px solid rgba(255,107,53,.3); }
+.g-luxsen-badge { background: rgba(45,212,160,.10); color: var(--g-luxsen); border: 1px solid rgba(45,212,160,.3); }
+.g-one-badge    { background: rgba(180,127,255,.10); color: var(--g-one);   border: 1px solid rgba(180,127,255,.3); }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-dot"></div>
+      MPlace Allegro
+    </div>
+    <div>
+      <div class="login-title">Generator Aukcji Allegro</div>
+    </div>
+    <div class="login-sub">Zaloguj się kontem Google aby uzyskać dostęp do generatora.</div>
+    <button class="login-btn" onclick="signIn()">
+      <svg width="16" height="16" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Zaloguj przez Google
+    </button>
+    <div class="login-error" id="loginError">Błąd logowania. Spróbuj ponownie.</div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar" id="mainTopbar" style="display:none;">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji
+  </div>
+  <div class="topbar-right">
+    <div class="sync-dot" id="syncDot" title="Synchronizacja"></div>
+    <div class="user-badge" id="userBadge">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span id="userName" style="font-size:12px;"></span>
+    </div>
+    <button class="btn btn-ghost" onclick="signOut()" style="font-size:11px;padding:4px 10px;">Wyloguj</button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div class="app" id="appMain" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Klienci</div>
+      <div id="clientList" class="client-list"></div>
+      <button class="add-btn" onclick="openAddClient()">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Dodaj klienta
+      </button>
+    </div>
+    <div style="padding:10px 12px 6px;border-bottom:1px solid var(--border);">
+      <div class="sidebar-label">Historia aukcji</div>
+    </div>
+    <div id="historyList" class="history-scroll"></div>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost" onclick="newAuction()" style="width:100%;justify-content:center;font-size:11px;">+ Nowa aukcja</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="toolbar">
+      <span class="toolbar-name" id="toolbarLabel">Nowa aukcja</span>
+      <div class="sep"></div>
+      <button class="btn btn-primary" id="generateBtn" onclick="generateSections()">
+        ✦ Generuj sekcje
+      </button>
+      <button class="btn btn-ghost" onclick="addSection()">+ Sekcja</button>
+      <div class="toolbar-right">
+        <button class="btn btn-ghost" onclick="refreshPreview()">↻</button>
+        <button class="btn btn-ghost" id="saveBtn" onclick="saveAuction()">Zapisz</button>
+        <button class="btn btn-ghost" id="exportBtn" onclick="exportHTML()" style="display:none;">↓ HTML</button>
+        <button class="btn btn-ghost" onclick="copyHTMLToClipboard()">⎘ Kopiuj</button>
+      </div>
+    </div>
+
+    <div class="editor-area">
+
+      <!-- INPUT PANEL -->
+      <div class="input-panel">
+        <div class="panel-header">
+          <span class="panel-title">Treść źródłowa</span>
+          <button class="icon-btn" onclick="clearInput()">✕</button>
+        </div>
+        <div class="input-meta">
+          <input type="text" class="input-field" id="auctionTitle" placeholder="Nazwa aukcji…" style="flex:2;">
+          <select class="input-field" id="clientSelect" style="flex:1;" onchange="selectClientFromDropdown()">
+            <option value="">Klient…</option>
+          </select>
+        </div>
+        <div class="textarea-wrap">
+          <div class="sidebar-label">Wklej treść produktu</div>
+          <textarea
+            class="content-textarea"
+            id="sourceText"
+            placeholder="Wklej tutaj opis produktu, właściwości, składniki, sposób użycia...&#10;&#10;AI automatycznie podzieli na sekcje i dobierze layouty Allegro."
+            oninput="updateCharCount()"
+          ></textarea>
+          <div class="char-count" id="charCount">0 znaków</div>
+        </div>
+        <div class="ai-status">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">Gotowy</span>
+        </div>
+      </div>
+
+      <!-- SECTIONS PANEL -->
+      <div class="sections-panel">
+        <div class="panel-header">
+          <span class="panel-title">Sekcje aukcji</span>
+          <span id="sectionCount" style="font-size:10px;font-family:var(--mono);color:var(--text3);">0 sekcji</span>
+        </div>
+        <div id="sectionsList" class="sections-list">
+          <div class="empty-state" id="emptySections">
+            <div class="empty-icon">◈</div>
+            <div class="empty-title">Brak sekcji</div>
+            <div class="empty-desc">Wklej treść produktu i kliknij "Generuj sekcje"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREVIEW PANEL -->
+      <div class="preview-panel">
+        <div class="panel-header">
+          <span class="panel-title">Podgląd Allegro</span>
+          <div style="display:flex;gap:6px;">
+            <button class="icon-btn" onclick="copyHTMLToClipboard()" title="Kopiuj HTML">⎘</button>
+            <button class="icon-btn" onclick="exportHTML()" title="Pobierz HTML">↓</button>
+          </div>
+        </div>
+        <div class="preview-frame" id="previewFrame">
+          <div class="empty-state">
+            <div class="empty-icon">▦</div>
+            <div class="empty-title">Podgląd aukcji</div>
+            <div class="empty-desc">Wygeneruj sekcje by zobaczyć podgląd</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD CLIENT -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal">
+    <div class="modal-title">Dodaj klienta</div>
+    <div class="modal-field">
+      <label>Nazwa klienta</label>
+      <input type="text" class="input-field" id="newClientName" placeholder="np. Botamed" style="width:100%;">
+    </div>
+    <div class="modal-field">
+      <label>Inicjały (maks. 3 znaki)</label>
+      <input type="text" class="input-field" id="newClientInitials" placeholder="np. BOT" maxlength="3" style="width:100%;">
+    </div>
+    <div class="modal-field">
+      <label>Grupa</label>
+      <select class="input-field" id="newClientGroup" style="width:100%;">
+        <option value="">Brak grupy</option>
+        <option value="MEBLE">MEBLE</option>
+        <option value="LUXSEN">LUXSEN</option>
+        <option value="ONE">ONE</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('clientModal')">Anuluj</button>
+      <button class="btn btn-primary" onclick="addClient()">Dodaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyDY9auc_REPLACE_WITH_YOUR_KEY",
+  authDomain:        "mplace-hub.firebaseapp.com",
+  projectId:         "mplace-hub",
+  storageBucket:     "mplace-hub.firebasestorage.app",
+  messagingSenderId: "301464643830",
+  appId:             "1:301464643830:web:e256a5434ec148f1b9e4d7"
+};
+
+const WORKER_URL = 'https://red-haze-5f37mplace-agent.contactmplace.workers.dev';
+
+// ── INIT FIREBASE ──
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = {
+  user:          null,
+  clients:       [],
+  history:       [],
+  activeClient:  null,
+  activeAuction: null,
+  sections:      [],
+  isGenerating:  false,
+};
+
+let unsubHistory = null; // Firestore listener
+
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+auth.onAuthStateChanged(user => {
+  if (user) {
+    state.user = user;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainTopbar').style.display = 'flex';
+    document.getElementById('appMain').style.display = 'flex';
+    renderUserBadge(user);
+    loadClients();
+  } else {
+    state.user = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainTopbar').style.display = 'none';
+    document.getElementById('appMain').style.display = 'none';
+    if (unsubHistory) { unsubHistory(); unsubHistory = null; }
+  }
+});
+
+function signIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    console.error(err);
+    document.getElementById('loginError').style.display = 'block';
+  });
+}
+
+function signOut() {
+  auth.signOut();
+}
+
+function renderUserBadge(user) {
+  document.getElementById('userName').textContent = user.displayName?.split(' ')[0] || '';
+  const avatar = document.getElementById('userAvatar');
+  if (user.photoURL) {
+    avatar.innerHTML = `<img src="${user.photoURL}" alt="">`;
+  } else {
+    avatar.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+  }
+}
+
+// ══════════════════════════════════════════════
+// FIRESTORE HELPERS
+// ══════════════════════════════════════════════
+function userDoc() {
+  return db.collection('allegro_users').doc(state.user.uid);
+}
+function clientsCol() {
+  return userDoc().collection('clients');
+}
+function auctionsCol() {
+  return userDoc().collection('auctions');
+}
+
+function setSyncState(s) {
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot ' + s;
+}
+
+// ══════════════════════════════════════════════
+// CLIENTS — Firestore
+// ══════════════════════════════════════════════
+async function loadClients() {
+  try {
+    const snap = await clientsCol().orderBy('createdAt').get();
+    state.clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // seed demo clients if empty
+    if (state.clients.length === 0) {
+      await seedDemoClients();
+      return loadClients();
+    }
+
+    renderClients();
+    updateClientDropdown();
+    if (state.clients.length > 0 && !state.activeClient) {
+      selectClient(state.clients[0].id);
+    }
+    subscribeHistory();
+  } catch(e) {
+    console.error(e);
+    toast('Błąd ładowania klientów', 'error');
+  }
+}
+
+async function seedDemoClients() {
+  const demos = [
+    { name: 'Botamed', initials: 'BOT', group: 'LUXSEN', createdAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { name: 'Demo Klient', initials: 'DEM', group: '', createdAt: firebase.firestore.FieldValue.serverTimestamp() },
+  ];
+  for (const c of demos) await clientsCol().add(c);
+}
+
+function renderClients() {
+  const list = document.getElementById('clientList');
+  list.innerHTML = '';
+  state.clients.forEach(c => {
+    const badgeClass = c.group ? `g-${c.group.toLowerCase()}-badge` : '';
+    const el = document.createElement('div');
+    el.className = 'client-item' + (state.activeClient?.id === c.id ? ' active' : '');
+    el.onclick = () => selectClient(c.id);
+    el.innerHTML = `
+      <div class="client-avatar ${badgeClass}">${c.initials || c.name[0]}</div>
+      <div class="client-name">${c.name}</div>
+      <div class="client-count">${getClientCount(c.id)}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function getClientCount(id) {
+  return state.history.filter(h => h.clientId === id).length || '';
+}
+
+function selectClient(id) {
+  state.activeClient = state.clients.find(c => c.id === id);
+  renderClients();
+  renderHistory();
+  updateClientDropdown();
+}
+
+function selectClientFromDropdown() {
+  const v = document.getElementById('clientSelect').value;
+  if (v) selectClient(v);
+}
+
+function updateClientDropdown() {
+  const sel = document.getElementById('clientSelect');
+  sel.innerHTML = '<option value="">Klient…</option>';
+  state.clients.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.name;
+    if (state.activeClient?.id === c.id) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function openAddClient() {
+  document.getElementById('newClientName').value = '';
+  document.getElementById('newClientInitials').value = '';
+  document.getElementById('newClientGroup').value = '';
+  openModal('clientModal');
+}
+
+async function addClient() {
+  const name     = document.getElementById('newClientName').value.trim();
+  const initials = document.getElementById('newClientInitials').value.trim().toUpperCase();
+  const group    = document.getElementById('newClientGroup').value;
+  if (!name) return;
+
+  setSyncState('syncing');
+  try {
+    const ref = await clientsCol().add({
+      name,
+      initials: initials || name.substring(0,3).toUpperCase(),
+      group,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    state.clients.push({ id: ref.id, name, initials, group });
+    renderClients();
+    updateClientDropdown();
+    selectClient(ref.id);
+    setSyncState('synced');
+    closeModal('clientModal');
+    toast('Klient dodany', 'success');
+  } catch(e) {
+    setSyncState('error');
+    toast('Błąd dodawania klienta', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════
+// HISTORY — Firestore realtime
+// ══════════════════════════════════════════════
+function subscribeHistory() {
+  if (unsubHistory) unsubHistory();
+  unsubHistory = auctionsCol()
+    .orderBy('updatedAt', 'desc')
+    .limit(50)
+    .onSnapshot(snap => {
+      state.history = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderHistory();
+      renderClients(); // update counts
+    }, err => {
+      console.error(err);
+      setSyncState('error');
+    });
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const filtered = state.activeClient
+    ? state.history.filter(h => h.clientId === state.activeClient.id)
+    : state.history;
+
+  list.innerHTML = '';
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="padding:14px 12px;font-size:11px;color:var(--text3);text-align:center;">Brak aukcji</div>';
+    return;
+  }
+
+  filtered.forEach(h => {
+    const client = state.clients.find(c => c.id === h.clientId);
+    const badgeClass = client?.group ? `g-${client.group.toLowerCase()}-badge` : '';
+    const el = document.createElement('div');
+    el.className = 'history-item' + (state.activeAuction?.id === h.id ? ' active' : '');
+    el.onclick = () => loadAuction(h.id);
+    el.innerHTML = `
+      <div class="history-title">${h.title || 'Bez tytułu'}</div>
+      <div class="history-meta">
+        ${client ? `<span class="history-client ${badgeClass}" style="padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:9px;">${client.initials||client.name}</span>` : ''}
+        <span>${formatDate(h.updatedAt)}</span>
+        <span>${(h.sections||[]).length} sek.</span>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit' });
+}
+
+function loadAuction(id) {
+  const auction = state.history.find(h => h.id === id);
+  if (!auction) return;
+  state.activeAuction = auction;
+  state.sections = JSON.parse(JSON.stringify(auction.sections || []));
+  document.getElementById('auctionTitle').value = auction.title || '';
+  document.getElementById('sourceText').value = auction.sourceText || '';
+  updateCharCount();
+  if (auction.clientId) selectClient(auction.clientId);
+  renderSections();
+  renderHistory();
+  refreshPreview();
+  document.getElementById('toolbarLabel').textContent = auction.title || 'Bez tytułu';
+  document.getElementById('exportBtn').style.display = 'flex';
+  toast('Aukcja załadowana');
+}
+
+async function saveAuction() {
+  const title      = document.getElementById('auctionTitle').value.trim() || 'Bez tytułu';
+  const sourceText = document.getElementById('sourceText').value;
+
+  setSyncState('syncing');
+  document.getElementById('saveBtn').disabled = true;
+
+  // Strip large base64 images before save (store references only)
+  const sectionsToSave = state.sections.map(s => {
+    const clean = { ...s };
+    // Keep image data — Firestore limit 1MB per doc, warn if large
+    return clean;
+  });
+
+  const data = {
+    title,
+    sourceText,
+    sections: sectionsToSave,
+    clientId:   state.activeClient?.id || null,
+    clientName: state.activeClient?.name || null,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    if (state.activeAuction?.id) {
+      await auctionsCol().doc(state.activeAuction.id).update(data);
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const ref = await auctionsCol().add(data);
+      state.activeAuction = { id: ref.id, ...data };
+    }
+    setSyncState('synced');
+    document.getElementById('exportBtn').style.display = 'flex';
+    toast('Zapisano w Firestore', 'success');
+  } catch(e) {
+    console.error(e);
+    setSyncState('error');
+    toast('Błąd zapisu: ' + e.message, 'error');
+  } finally {
+    document.getElementById('saveBtn').disabled = false;
+  }
+}
+
+function newAuction() {
+  state.activeAuction = null;
+  state.sections = [];
+  document.getElementById('auctionTitle').value = '';
+  document.getElementById('sourceText').value = '';
+  updateCharCount();
+  renderSections();
+  clearPreview();
+  document.getElementById('toolbarLabel').textContent = 'Nowa aukcja';
+  document.getElementById('exportBtn').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+// AI — GENERATE SECTIONS (SSE)
+// ══════════════════════════════════════════════
+async function generateSections() {
+  const text = document.getElementById('sourceText').value.trim();
+  if (!text) { toast('Wklej treść produktu', 'error'); return; }
+  if (state.isGenerating) return;
+
+  state.isGenerating = true;
+  state.sections = [];
+  renderSections();
+  setStatus('active', 'Analizuję treść...');
+  document.getElementById('generateBtn').disabled = true;
+
+  const systemPrompt = `Jesteś ekspertem od tworzenia aukcji Allegro. Analizujesz treść produktu i dzielisz ją na sekcje zgodnie z dostępnymi layoutami Allegro.
+
+Dostępne typy sekcji:
+- TEXT_ONLY: Tylko tekst
+- IMAGE_ONLY: Tylko zdjęcie
+- IMAGE_LEFT_TEXT_RIGHT: Zdjęcie po lewej, tekst po prawej
+- TEXT_LEFT_IMAGE_RIGHT: Tekst po lewej, zdjęcie po prawej
+- IMAGE_IMAGE: Dwa zdjęcia obok siebie
+
+Zasady:
+1. Pierwsza sekcja: tytuł produktu (TEXT_ONLY)
+2. Sekcje z korzyściami: IMAGE_LEFT_TEXT_RIGHT lub TEXT_LEFT_IMAGE_RIGHT (naprzemiennie)
+3. Składniki i skład: TEXT_ONLY
+4. Sposób użycia: TEXT_ONLY
+5. Minimum 6 sekcji
+6. Punkty listy formatuj jako: ◆ treść punktu
+
+Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
+{"sections":[{"type":"TEXT_ONLY","heading":"Nagłówek","content":"Treść"}]}`;
+
+  const userPrompt = `Podziel na sekcje aukcji Allegro:\n\n${text}`;
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    // ── SSE READER ──
+    const reader  = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer   = '';
+    let fullText = '';
+    let wordCount = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const delta =
+            parsed?.delta?.text ||
+            parsed?.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            fullText += delta;
+            wordCount = fullText.split(/\s+/).length;
+            setStatus('active', `Generuję... (${wordCount} słów)`);
+          }
+        } catch(e) { /* skip non-JSON lines */ }
+      }
+    }
+
+    // ── PARSE JSON ──
+    const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Nieprawidłowa odpowiedź AI');
+
+    const result = JSON.parse(jsonMatch[0]);
+    state.sections = result.sections.map((s, i) => ({
+      ...s,
+      id: 's' + Date.now() + i,
+      image: null
+    }));
+
+    // Auto-title
+    if (!document.getElementById('auctionTitle').value && state.sections[0]?.heading) {
+      const t = state.sections[0].heading;
+      document.getElementById('auctionTitle').value = t;
+      document.getElementById('toolbarLabel').textContent = t;
+    }
+
+    renderSections();
+    refreshPreview();
+    setStatus('', 'Gotowy');
+    toast(`Wygenerowano ${state.sections.length} sekcji`, 'success');
+
+  } catch(err) {
+    console.error(err);
+    setStatus('error', 'Błąd: ' + err.message);
+    toast('Błąd: ' + err.message, 'error');
+  } finally {
+    state.isGenerating = false;
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// SECTIONS — RENDER
+// ══════════════════════════════════════════════
+function renderSections() {
+  const list  = document.getElementById('sectionsList');
+  const empty = document.getElementById('emptySections');
+  const count = document.getElementById('sectionCount');
+
+  count.textContent = state.sections.length + ' sekcji';
+
+  list.querySelectorAll('.section-card').forEach(el => el.remove());
+
+  if (state.sections.length === 0) {
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  state.sections.forEach((sec, idx) => {
+    list.appendChild(createSectionCard(sec, idx));
+  });
+}
+
+function createSectionCard(section, idx) {
+  const card = document.createElement('div');
+  card.className = 'section-card';
+  card.dataset.id = section.id;
+
+  const opts = [
+    ['TEXT_ONLY','Tekst'],
+    ['IMAGE_ONLY','Zdjęcie'],
+    ['IMAGE_LEFT_TEXT_RIGHT','Zdj.L / Tekst P'],
+    ['TEXT_LEFT_IMAGE_RIGHT','Tekst L / Zdj.P'],
+    ['IMAGE_IMAGE','Zdj. / Zdj.'],
+  ].map(([v,l]) => `<option value="${v}"${section.type===v?' selected':''}>${l}</option>`).join('');
+
+  card.innerHTML = `
+    <div class="section-header">
+      <span class="section-num">${idx+1}.</span>
+      <select class="section-type-select" onchange="changeSectionType('${section.id}',this.value)">${opts}</select>
+      <div class="section-actions">
+        <button class="icon-btn" onclick="moveSectionUp(${idx})" title="Wyżej">↑</button>
+        <button class="icon-btn" onclick="moveSectionDown(${idx})" title="Niżej">↓</button>
+        <button class="icon-btn danger" onclick="removeSection('${section.id}')" title="Usuń">✕</button>
+      </div>
+    </div>
+    <div class="section-body" id="body_${section.id}">${renderSectionBody(section)}</div>
+  `;
+  return card;
+}
+
+function renderSectionBody(section) {
+  const txt = (section.heading ? `**${section.heading}**\n\n` : '') + (section.content || '');
+  const textCol = `<div class="section-col"><div class="col-label">Tekst</div><div class="col-content">${escHtml(txt)}</div></div>`;
+  const imgSlot = (slot) => {
+    const img = section['image_'+slot] || section.image;
+    return img
+      ? `<div class="img-uploaded"><img src="${img}" alt=""><button class="img-remove" onclick="removeImage('${section.id}','${slot}')">✕</button></div>`
+      : `<div class="img-placeholder" onclick="triggerImageUpload('${section.id}','${slot}')"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/><circle cx="6" cy="7" r="1.5" fill="currentColor"/><path d="M1 12l4-4 3 3 3-3 6 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span>Dodaj zdjęcie</span></div>`;
+  };
+  const imgCol = (slot, label) => `<div class="section-col"><div class="col-label">${label}</div>${imgSlot(slot)}</div>`;
+
+  switch (section.type) {
+    case 'TEXT_ONLY':            return textCol;
+    case 'IMAGE_ONLY':           return imgCol('main','Zdjęcie');
+    case 'IMAGE_LEFT_TEXT_RIGHT': return imgCol('left','Zdjęcie (L)') + textCol.replace('section-col','section-col');
+    case 'TEXT_LEFT_IMAGE_RIGHT': return textCol + imgCol('right','Zdjęcie (P)');
+    case 'IMAGE_IMAGE':          return imgCol('img1','Zdjęcie 1') + imgCol('img2','Zdjęcie 2');
+    default: return textCol;
+  }
+}
+
+function escHtml(t) {
+  if (!t) return '';
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+          .replace(/\n/g,'<br>');
+}
+
+// ── SECTION ACTIONS ──
+function changeSectionType(id, type) {
+  const s = state.sections.find(s => s.id === id);
+  if (!s) return;
+  s.type = type;
+  const body = document.getElementById('body_' + id);
+  if (body) body.innerHTML = renderSectionBody(s);
+  refreshPreview();
+}
+
+function removeSection(id) {
+  state.sections = state.sections.filter(s => s.id !== id);
+  renderSections();
+  refreshPreview();
+}
+
+function moveSectionUp(idx) {
+  if (idx === 0) return;
+  [state.sections[idx-1], state.sections[idx]] = [state.sections[idx], state.sections[idx-1]];
+  renderSections(); refreshPreview();
+}
+
+function moveSectionDown(idx) {
+  if (idx >= state.sections.length-1) return;
+  [state.sections[idx], state.sections[idx+1]] = [state.sections[idx+1], state.sections[idx]];
+  renderSections(); refreshPreview();
+}
+
+function addSection() {
+  state.sections.push({ id:'s'+Date.now(), type:'TEXT_ONLY', heading:'Nowa sekcja', content:'', image:null });
+  renderSections(); refreshPreview();
+}
+
+// ── IMAGE UPLOAD ──
+function triggerImageUpload(sectionId, slot) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const s = state.sections.find(s => s.id === sectionId);
+      if (s) {
+        s['image_'+slot] = ev.target.result;
+        if (!s.image) s.image = ev.target.result;
+        renderSections(); refreshPreview();
+        toast('Zdjęcie dodane','success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function removeImage(sectionId, slot) {
+  const s = state.sections.find(s => s.id === sectionId);
+  if (s) { delete s['image_'+slot]; renderSections(); refreshPreview(); }
+}
+
+// ══════════════════════════════════════════════
+// PREVIEW & EXPORT
+// ══════════════════════════════════════════════
+function generateAllegroHTML() {
+  const css = `<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;background:#fff}.sec{width:100%}.sec-text{padding:16px 20px}.sec-text h2{font-size:16px;font-weight:700;margin-bottom:10px}.sec-text p{font-size:13px;color:#444;margin-bottom:6px}.row{display:flex;width:100%}.col-img{flex:0 0 50%}.col-img img{width:100%;height:200px;object-fit:cover;display:block}.col-txt{flex:0 0 50%;padding:16px 20px}.img-only img{width:100%;max-height:300px;object-fit:cover;display:block}.ph{background:#f5f5f5;height:180px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;border:2px dashed #e0e0e0}.div{height:1px;background:#eee}.bullet{padding-left:16px;position:relative}.bullet::before{content:"◆ ";color:#2196F3;position:absolute;left:0}</style>`;
+
+  let body = '';
+  state.sections.forEach((s, i) => {
+    const txt = buildTextHTML(s);
+    const img = (slot) => {
+      const src = s['image_'+slot] || s.image;
+      return src ? `<img src="${src}" alt="">` : '<div class="ph">[ Zdjęcie ]</div>';
+    };
+    switch(s.type) {
+      case 'TEXT_ONLY':             body += `<div class="sec"><div class="sec-text">${txt}</div></div>`; break;
+      case 'IMAGE_ONLY':            body += `<div class="sec img-only">${img('main')}</div>`; break;
+      case 'IMAGE_LEFT_TEXT_RIGHT': body += `<div class="sec"><div class="row"><div class="col-img">${img('left')}</div><div class="col-txt">${txt}</div></div></div>`; break;
+      case 'TEXT_LEFT_IMAGE_RIGHT': body += `<div class="sec"><div class="row"><div class="col-txt">${txt}</div><div class="col-img">${img('right')}</div></div></div>`; break;
+      case 'IMAGE_IMAGE':           body += `<div class="sec"><div class="row"><div class="col-img">${img('img1')}</div><div class="col-img">${img('img2')}</div></div></div>`; break;
+    }
+    if (i < state.sections.length-1) body += '<div class="div"></div>';
+  });
+  return css + '<div>' + body + '</div>';
+}
+
+function buildTextHTML(s) {
+  let h = '';
+  if (s.heading) h += `<h2>${s.heading}</h2>`;
+  if (s.content) {
+    s.content.split('\n').filter(l=>l.trim()).forEach(line => {
+      h += line.startsWith('◆')
+        ? `<p class="bullet">${line.replace('◆','').trim()}</p>`
+        : `<p>${line}</p>`;
+    });
+  }
+  return h;
+}
+
+function refreshPreview() {
+  if (state.sections.length === 0) { clearPreview(); return; }
+  const html = generateAllegroHTML();
+  const encoded = html.replace(/"/g,'&quot;');
+  document.getElementById('previewFrame').innerHTML =
+    `<iframe srcdoc="${encoded}" style="width:100%;height:100%;border:none;"></iframe>`;
+}
+
+function clearPreview() {
+  document.getElementById('previewFrame').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">▦</div>
+      <div class="empty-title">Podgląd aukcji</div>
+      <div class="empty-desc">Wygeneruj sekcje by zobaczyć podgląd</div>
+    </div>`;
+}
+
+function exportHTML() {
+  const html = generateAllegroHTML();
+  const full = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><title>Aukcja Allegro</title></head><body>${html}</body></html>`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([full], {type:'text/html'}));
+  const t = document.getElementById('auctionTitle').value || 'aukcja';
+  a.download = t.replace(/\s+/g,'-').toLowerCase() + '.html';
+  a.click();
+  toast('Plik HTML pobrany','success');
+}
+
+async function copyHTMLToClipboard() {
+  if (state.sections.length === 0) { toast('Brak sekcji do skopiowania','error'); return; }
+  try {
+    await navigator.clipboard.writeText(generateAllegroHTML());
+    toast('HTML skopiowany ⎘','success');
+  } catch { toast('Nie udało się skopiować','error'); }
+}
+
+// ══════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════
+function updateCharCount() {
+  const n = document.getElementById('sourceText').value.length;
+  document.getElementById('charCount').textContent = n.toLocaleString('pl-PL') + ' znaków';
+}
+
+function clearInput() {
+  document.getElementById('sourceText').value = '';
+  updateCharCount();
+}
+
+function setStatus(type, msg) {
+  document.getElementById('statusDot').className = 'status-dot' + (type ? ' '+type : '');
+  document.getElementById('statusText').textContent = msg;
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function toast(msg, type='') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  const icon = type==='success' ? '✓' : type==='error' ? '✕' : type==='saving' ? '↻' : 'ℹ';
+  const color = type==='success'?'var(--green)':type==='error'?'var(--red)':type==='saving'?'var(--yellow)':'var(--blue)';
+  el.innerHTML = `<span style="color:${color}">${icon}</span> ${msg}`;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// Modal close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); });
+});
+document.getElementById('newClientName').addEventListener('keydown', e => {
+  if (e.key==='Enter') addClient();
+});
+</script>
+</body>
+</html>
