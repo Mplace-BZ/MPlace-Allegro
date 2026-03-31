@@ -774,7 +774,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.9</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.0</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1451,35 +1451,48 @@ ZASADY STOSOWANIA WYTYCZNYCH:
 - Zachowaj kolejność sekcji z wytycznych`;
   }
 
-  const systemPrompt = `Jesteś ekspertem od układu i copywritingu aukcji Allegro.
+  const systemPrompt = `Jesteś profesjonalnym COPYWRITEREM aukcji Allegro dla produktów zdrowotnych.
+Tworzysz aukcje które są CZYTELNE, ATRAKCYJNE i PROFESJONALNE dla kupującego.
 
 ════════════════════════════════════════════════
-ABSOLUTNA ZASADA #1 — WIERNOŚĆ TREŚCI ŹRÓDŁOWEJ
+ZASADA #1 — WIERNOŚĆ MERYTORYCZNA
 ════════════════════════════════════════════════
-To są produkty medyczne/zdrowotne. NIGDY nie wymyślaj, nie dodawaj, nie parafrazuj treści merytorycznych.
+Produkty są medyczne/zdrowotne. NIGDY nie wymyślaj treści merytorycznych.
+- Składniki, dawkowanie, sposób użycia, oświadczenia zdrowotne — przepisuj DOSŁOWNIE z tekstu źródłowego
+- NIE dodawaj korzyści zdrowotnych od siebie
+- NIE zmieniaj liczb, jednostek, nazw składników
 
-MUSISZ:
-- Używać WYŁĄCZNIE informacji z wklejonego tekstu źródłowego
-- Składniki, dawkowanie, sposób użycia, oświadczenia zdrowotne — przepisuj DOSŁOWNIE
-- Zachować wszystkie gwiazdki (*), zastrzeżenia prawne, odniesienia do EFSA
-- Każda informacja merytoryczna musi pochodzić z tekstu źródłowego — ZERO inwencji
+════════════════════════════════════════════════
+ZASADA #2 — COPYWRITING I FORMATOWANIE
+════════════════════════════════════════════════
+Jesteś copywriterem — treść musi być ATRAKCYJNA i CZYTELNA dla kupującego:
 
-NIE WOLNO CI:
-- Wymyślać korzyści zdrowotnych, których nie ma w tekście
-- Dodawać oświadczeń medycznych od siebie
-- Parafrazować składu, dawkowania, przeciwwskazań
-- Zmieniać liczb, jednostek, nazw składników
+POGRUBIENIA (**tekst**):
+- Pogrubiaj kluczowe frazy, nazwy składników, ważne korzyści
+- Pogrubiaj nazwy kategorii i podtytuły wewnątrz sekcji
+- Każdy bullet point powinien mieć pogrubiony początek jeśli to możliwe
+- Przykład: "**Układ odpornościowy** — wspiera zdrowie układu odpornościowego"
 
-Twoja rola to TYLKO:
-- Organizacja treści w sekcje aukcji Allegro
-- Copywriting nagłówków i wprowadzeń (ale NIE treści merytorycznych)
-- Formatowanie zgodne z wytycznymi marki (emoji, pogrubienia, układ)
-- Usuwanie duplikatów i szumu (np. powtórzone nazwy produktu, parametry Allegro)
+ODSTĘPY I CZYTELNOŚĆ:
+- Dodawaj puste linie (\\n\\n) między akapitami i grupami bullet pointów
+- Grupuj powiązane punkty pod pogrubionymi podtytułami
+- Krótkie akapity — max 2-3 zdania, potem nowa linia
+- Bullet pointy — jeden punkt = jedna linia, czytelnie
+
+GWIAZDKI (*) I ZASTRZEŻENIA:
+- USUŃ gwiazdki (*) z treści oświadczeń zdrowotnych
+- Zastrzeżenia prawne (EFSA, RWS itp.) wstaw na KOŃCU sekcji jako osobny mały akapit
+- Format zastrzeżeń: oddziel pustą linią, napisz pełnym zdaniem bez gwiazdek
+
+STYL:
+- Pisz do kupującego — "Twój organizm", "dla Ciebie", "Twoje zdrowie"
+- Nagłówki angażujące, nie suche
+- Treść informacyjna ale przystępna
 
 ════════════════════════════════════════════════
 EMOJI
 ════════════════════════════════════════════════
-- USUŃ wszystkie emoji z tekstu źródłowego (🌿 📌 ⚡ 💊 🧪 itp.)
+- USUŃ wszystkie emoji z tekstu źródłowego
 - Stosuj WYŁĄCZNIE emoji zdefiniowane w wytycznych marki (Wiki)
 - Jeśli brak wytycznych — nie używaj żadnych emoji
 
@@ -1498,6 +1511,7 @@ ZASADY OGÓLNE
 1. Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj
 2. Sekcje z korzyściami: IMAGE_LEFT_TEXT_RIGHT lub TEXT_LEFT_IMAGE_RIGHT (naprzemiennie)
 3. Minimum 6 sekcji
+4. Usuwaj duplikaty i szum (powtórzone nazwy produktu, parametry Allegro typu EAN, "Liczba sztuk" itp.)
 ${guidelinesBlock}
 
 Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy).
@@ -1766,7 +1780,7 @@ function removeImage(sectionId, slot) {
 // PREVIEW & EXPORT
 // ══════════════════════════════════════════════
 function generateAllegroHTML() {
-  const css = `<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;background:#fff}.sec{width:100%}.sec-text{padding:16px 20px}.sec-text h2{font-size:16px;font-weight:700;margin-bottom:10px}.sec-text p{font-size:13px;color:#444;margin-bottom:6px}.row{display:flex;width:100%}.col-img{flex:0 0 50%}.col-img img{width:100%;height:200px;object-fit:cover;display:block}.col-txt{flex:0 0 50%;padding:16px 20px}.img-only img{width:100%;max-height:300px;object-fit:cover;display:block}.ph{background:#f5f5f5;height:180px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;border:2px dashed #e0e0e0}.div{height:1px;background:#eee}.bullet{padding-left:16px;position:relative}.bullet::before{content:"◆ ";color:#2196F3;position:absolute;left:0}</style>`;
+  const css = `<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;background:#fff}strong{font-weight:700;color:#222}.sec{width:100%}.sec-text{padding:20px 24px}.sec-text h2{font-size:17px;font-weight:700;margin-bottom:14px;color:#111}.sec-text p{font-size:13px;color:#444;margin-bottom:8px}.sec-text br{display:block;content:"";margin:6px 0}.row{display:flex;width:100%}.col-img{flex:0 0 50%}.col-img img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}.col-txt{flex:0 0 50%;padding:20px 24px}.img-only img{width:100%;max-height:400px;object-fit:cover;display:block}.ph{background:#f5f5f5;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;border:2px dashed #e0e0e0}.div{height:2px;background:#f0f0f0;margin:4px 0}.bullet{padding-left:6px;margin-bottom:6px}</style>`;
 
   let body = '';
   state.sections.forEach((s, i) => {
@@ -1789,15 +1803,32 @@ function generateAllegroHTML() {
 
 function buildTextHTML(s) {
   let h = '';
-  if (s.heading) h += `<h2>${s.heading}</h2>`;
+  if (s.heading) h += `<h2>${formatText(s.heading)}</h2>`;
   if (s.content) {
-    s.content.split('\n').filter(l=>l.trim()).forEach(line => {
-      h += line.startsWith('◆')
-        ? `<p class="bullet">${line.replace('◆','').trim()}</p>`
-        : `<p>${line}</p>`;
-    });
+    const lines = s.content.split('\n');
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      if (!line) { h += '<br>'; i++; continue; }
+      // Bullet points (◆, 🔹, ✅, •, -, ◈)
+      const bulletMatch = line.match(/^(◆|🔹|✅|•|◈|-)\s*(.*)/);
+      if (bulletMatch) {
+        const emoji = bulletMatch[1] === '-' ? '◆' : bulletMatch[1];
+        h += `<p class="bullet">${emoji} ${formatText(bulletMatch[2])}</p>`;
+      } else {
+        h += `<p>${formatText(line)}</p>`;
+      }
+      i++;
+    }
   }
   return h;
+}
+
+function formatText(t) {
+  if (!t) return '';
+  // Bold: **text**
+  t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  return t;
 }
 
 function refreshPreview() {
