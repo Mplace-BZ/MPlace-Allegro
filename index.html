@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.0</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.1</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1580,6 +1580,10 @@ ZASADY OGÓLNE
 2. Sekcje z korzyściami: IMAGE_LEFT_TEXT_RIGHT lub TEXT_LEFT_IMAGE_RIGHT (naprzemiennie)
 3. Minimum 6 sekcji
 4. Usuwaj duplikaty i szum (powtórzone nazwy produktu, parametry Allegro typu EAN, "Liczba sztuk" itp.)
+5. ZERO DUPLIKATÓW — każda informacja pojawia się TYLKO RAZ w pierwszej właściwej sekcji. NIE powtarzaj składu, zastrzeżeń prawnych, ani zdań między sekcjami
+6. Gwiazdki (*) przy oświadczeniach EFSA są OBOWIĄZKOWE — każde oświadczenie zdrowotne musi mieć * na końcu, a pod listą pełne zastrzeżenie EFSA
+7. NIE DODAWAJ informacji których nie ma w tekście źródłowym — jeśli czegoś nie ma w źródle, NIE ISTNIEJE w aukcji
+8. Gdy tekst źródłowy zawiera sprzeczne dane (np. różne czasy kuracji) — użyj PIERWSZEJ wymienionej wartości i oznacz [DO WERYFIKACJI]
 ${guidelinesBlock}
 
 Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy).
