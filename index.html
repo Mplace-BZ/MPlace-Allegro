@@ -219,20 +219,8 @@ body {
   height: calc(100vh - 52px);
 }
 
-/* ── SIDEBAR ── */
-.sidebar {
-  width: 240px;
-  min-width: 240px;
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.sidebar-section {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--border);
-}
+/* ── SIDEBAR (removed — clients moved to topbar) ── */
+.sidebar { display: none; }
 .sidebar-label {
   font-family: var(--mono);
   font-size: 10px;
@@ -241,26 +229,86 @@ body {
   letter-spacing: 0.12em;
   margin-bottom: 8px;
 }
-.client-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.client-item {
+
+/* ── TOPBAR CLIENTS ── */
+.topbar-clients {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 8px;
+  gap: 4px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border2);
+}
+.topbar-client {
+  padding: 3px 10px;
   border-radius: var(--radius);
+  font-size: 11px;
+  font-family: var(--mono);
   cursor: pointer;
-  transition: all 0.15s;
   border: 1px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+  color: var(--text2);
 }
-.client-item:hover { background: var(--bg3); }
-.client-item.active {
-  background: rgba(255,107,53,.07);
-  border-color: rgba(255,107,53,.25);
+.topbar-client:hover { background: var(--bg3); }
+.topbar-client.active {
+  background: rgba(255,107,53,.1);
+  border-color: rgba(255,107,53,.3);
+  color: var(--accent);
 }
+.topbar-client .tpl-dot { font-size: 8px; opacity: .5; margin-left: 2px; }
+.topbar-add-client {
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px dashed var(--border2);
+  color: var(--text3);
+  transition: all 0.15s;
+}
+.topbar-add-client:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── TOPBAR HISTORY DROPDOWN ── */
+.history-dropdown {
+  position: relative;
+}
+.history-toggle {
+  padding: 3px 10px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-family: var(--mono);
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  background: var(--bg3);
+  transition: all 0.15s;
+}
+.history-toggle:hover { border-color: var(--accent); }
+.history-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius2);
+  width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.history-menu.open { display: block; }
+.history-menu .history-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.history-menu .history-item:hover { background: var(--bg3); }
+.history-menu .history-item.active { background: var(--bg3); }
+
 .client-avatar {
   width: 26px; height: 26px;
   border-radius: 6px;
@@ -273,49 +321,9 @@ body {
   font-weight: 600;
   flex-shrink: 0;
 }
-.client-item.active .client-avatar {
-  background: rgba(255,107,53,.12);
-  border-color: rgba(255,107,53,.4);
-  color: var(--accent);
-}
 .client-name { font-size: 12px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .client-count { font-size: 10px; color: var(--text3); font-family: var(--mono); }
 
-.add-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: 1px dashed var(--border2);
-  border-radius: var(--radius);
-  color: var(--text3);
-  font-family: var(--sans);
-  font-size: 11px;
-  padding: 6px 8px;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.15s;
-  margin-top: 6px;
-}
-.add-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-.history-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.history-item {
-  padding: 8px 8px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.15s;
-  border: 1px solid transparent;
-}
-.history-item:hover { background: var(--bg3); }
-.history-item.active { background: var(--bg3); border-color: var(--border2); }
 .history-title { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .history-meta { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; display: flex; gap: 6px; }
 .history-client {
@@ -323,11 +331,6 @@ body {
   padding: 1px 5px;
   border-radius: 3px;
   font-family: var(--mono);
-}
-
-.sidebar-footer {
-  padding: 10px 8px;
-  border-top: 1px solid var(--border);
 }
 
 /* ── MAIN ── */
@@ -546,8 +549,8 @@ select.input-field { cursor: pointer; }
 
 /* ── PREVIEW ── */
 .preview-panel {
-  width: 440px;
-  min-width: 320px;
+  flex: 1;
+  min-width: 400px;
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -679,6 +682,13 @@ select.input-field { cursor: pointer; }
     <div class="logo-dot"></div>
     <strong>MPlace</strong> &nbsp;/ Generator Aukcji
   </div>
+  <div class="topbar-clients" id="topbarClients"></div>
+  <div class="topbar-add-client" onclick="openAddClient()">+</div>
+  <div class="history-dropdown">
+    <div class="history-toggle" onclick="toggleHistoryMenu()">Historia ▾</div>
+    <div class="history-menu" id="historyMenu"></div>
+  </div>
+  <button class="btn btn-ghost" onclick="newAuction()" style="font-size:11px;padding:4px 10px;">+ Nowa</button>
   <div class="topbar-right">
     <div class="sync-dot" id="syncDot" title="Synchronizacja"></div>
     <div class="user-badge" id="userBadge">
@@ -692,25 +702,6 @@ select.input-field { cursor: pointer; }
 <!-- ══ APP ══ -->
 <div class="app" id="appMain" style="display:none;">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Klienci</div>
-      <div id="clientList" class="client-list"></div>
-      <button class="add-btn" onclick="openAddClient()">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Dodaj klienta
-      </button>
-    </div>
-    <div style="padding:10px 12px 6px;border-bottom:1px solid var(--border);">
-      <div class="sidebar-label">Historia aukcji</div>
-    </div>
-    <div id="historyList" class="history-scroll"></div>
-    <div class="sidebar-footer">
-      <button class="btn btn-ghost" onclick="newAuction()" style="width:100%;justify-content:center;font-size:11px;">+ Nowa aukcja</button>
-    </div>
-  </div>
-
   <!-- MAIN -->
   <div class="main">
     <div class="toolbar">
@@ -719,7 +710,6 @@ select.input-field { cursor: pointer; }
       <button class="btn btn-primary" id="generateBtn" onclick="generateSections()">
         ✦ Generuj sekcje
       </button>
-      <button class="btn btn-ghost" onclick="addSection()">+ Sekcja</button>
       <button class="btn btn-ghost" id="saveTemplateBtn" onclick="saveTemplate()" style="display:none;">◈ Zapisz szablon</button>
       <div class="toolbar-right">
         <button class="btn btn-ghost" onclick="refreshPreview()">↻</button>
@@ -957,19 +947,14 @@ async function seedDemoClients() {
 }
 
 function renderClients() {
-  const list = document.getElementById('clientList');
-  list.innerHTML = '';
+  const bar = document.getElementById('topbarClients');
+  bar.innerHTML = '';
   state.clients.forEach(c => {
-    const badgeClass = c.group ? `g-${c.group.toLowerCase()}-badge` : '';
     const el = document.createElement('div');
-    el.className = 'client-item' + (state.activeClient?.id === c.id ? ' active' : '');
+    el.className = 'topbar-client' + (state.activeClient?.id === c.id ? ' active' : '');
     el.onclick = () => selectClient(c.id);
-    el.innerHTML = `
-      <div class="client-avatar ${badgeClass}">${c.initials || c.name[0]}</div>
-      <div class="client-name">${c.name}${c.template ? ' <span style="opacity:.4;font-size:9px;">◈</span>' : ''}</div>
-      <div class="client-count">${getClientCount(c.id)}</div>
-    `;
-    list.appendChild(el);
+    el.innerHTML = `${c.name}${c.template ? '<span class="tpl-dot">◈</span>' : ''}`;
+    bar.appendChild(el);
   });
 }
 
@@ -1092,7 +1077,7 @@ function subscribeHistory() {
 }
 
 function renderHistory() {
-  const list = document.getElementById('historyList');
+  const list = document.getElementById('historyMenu');
   const filtered = state.activeClient
     ? state.history.filter(h => h.clientId === state.activeClient.id)
     : state.history;
@@ -1108,7 +1093,7 @@ function renderHistory() {
     const badgeClass = client?.group ? `g-${client.group.toLowerCase()}-badge` : '';
     const el = document.createElement('div');
     el.className = 'history-item' + (state.activeAuction?.id === h.id ? ' active' : '');
-    el.onclick = () => loadAuction(h.id);
+    el.onclick = () => { loadAuction(h.id); toggleHistoryMenu(); };
     el.innerHTML = `
       <div class="history-title">${h.title || 'Bez tytułu'}</div>
       <div class="history-meta">
@@ -1120,6 +1105,18 @@ function renderHistory() {
     list.appendChild(el);
   });
 }
+
+function toggleHistoryMenu() {
+  document.getElementById('historyMenu').classList.toggle('open');
+}
+
+// Close history menu on outside click
+document.addEventListener('click', e => {
+  const dd = document.querySelector('.history-dropdown');
+  if (dd && !dd.contains(e.target)) {
+    document.getElementById('historyMenu')?.classList.remove('open');
+  }
+});
 
 function formatDate(ts) {
   if (!ts) return '';
@@ -1240,6 +1237,7 @@ Zasady:
 4. Sposób użycia: TEXT_ONLY
 5. Minimum 6 sekcji
 6. Punkty listy formatuj jako: ◆ treść punktu
+7. WAŻNE: Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj. Każda informacja z tekstu źródłowego musi znaleźć się w którejś sekcji.
 ${templateInstruction}
 
 Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
@@ -1253,7 +1251,7 @@ Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 8000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
       })
