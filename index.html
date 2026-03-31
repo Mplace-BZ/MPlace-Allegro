@@ -545,8 +545,8 @@ select.input-field { cursor: pointer; }
 .icon-btn.ai-btn.fix { color: var(--green); }
 .icon-btn.ai-btn.fix:hover { background: rgba(45,212,160,.1); }
 .icon-btn.ai-btn.loading { pointer-events: none; opacity: .6; }
-.icon-btn.ai-btn.loading::after { content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%; margin-left: 3px; animation: aidots 1s infinite; background: currentColor; box-shadow: 6px 0 0 currentColor, 12px 0 0 currentColor; }
-@keyframes aidots { 0%,100%{opacity:.2} 50%{opacity:1} }
+.icon-btn.ai-btn.loading { animation: aipulse 1s infinite; }
+@keyframes aipulse { 0%,100%{opacity:.3} 50%{opacity:1} }
 .section-body { display: flex; align-items: stretch; }
 .section-col { flex: 1; padding: 10px; min-height: 60px; display: flex; flex-direction: column; }
 .section-col + .section-col { border-left: 1px solid var(--border); }
