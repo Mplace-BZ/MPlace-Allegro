@@ -782,7 +782,7 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.4</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.5</span>
     <span class="logo-sep">|</span>
     <span class="logo-date" id="topbarDate"></span>
   </div>
@@ -1507,6 +1507,7 @@ async function saveAuction() {
     }
     setSyncState('synced');
     document.getElementById('exportBtn').style.display = 'flex';
+    document.getElementById('toolbarLabel').textContent = title;
     toast('Zapisano w Firestore', 'success');
   } catch(e) {
     console.error(e);
