@@ -523,8 +523,8 @@ select.input-field { cursor: pointer; }
 }
 .icon-btn:hover { background: var(--bg); color: var(--text2); }
 .icon-btn.danger:hover { background: var(--red-bg); color: var(--red); }
-.section-body { display: flex; }
-.section-col { flex: 1; padding: 10px; min-height: 60px; }
+.section-body { display: flex; align-items: stretch; }
+.section-col { flex: 1; padding: 10px; min-height: 60px; display: flex; flex-direction: column; }
 .section-col + .section-col { border-left: 1px solid var(--border); }
 .col-label { font-size: 9px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
 .section-heading-input {
@@ -546,6 +546,7 @@ select.input-field { cursor: pointer; }
 .section-content-input {
   width: 100%;
   min-height: 80px;
+  flex: 1;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -774,7 +775,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.0</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.1</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
