@@ -1240,7 +1240,8 @@ Zasady:
 7. WAŻNE: Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj. Każda informacja z tekstu źródłowego musi znaleźć się w którejś sekcji.
 ${templateInstruction}
 
-Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
+Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy).
+WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wartości jako \\", nowe linie jako \\n.
 {"sections":[{"type":"TEXT_ONLY","heading":"Nagłówek","content":"Treść"}]}`;
 
   const userPrompt = `Podziel na sekcje aukcji Allegro:\n\n${text}`;
@@ -1251,7 +1252,7 @@ Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
+        max_tokens: 16000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
       })
@@ -1296,7 +1297,20 @@ Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
     const jsonMatch = fullText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Nieprawidłowa odpowiedź AI');
 
-    const result = JSON.parse(jsonMatch[0]);
+    let jsonStr = jsonMatch[0];
+
+    // Repair truncated JSON — auto-close brackets
+    try { JSON.parse(jsonStr); } catch(e) {
+      // Remove trailing incomplete entry (after last complete },)
+      jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
+      // Close open arrays and objects
+      const opens = (jsonStr.match(/\[/g)||[]).length - (jsonStr.match(/\]/g)||[]).length;
+      const braces = (jsonStr.match(/\{/g)||[]).length - (jsonStr.match(/\}/g)||[]).length;
+      for (let i = 0; i < opens; i++) jsonStr += ']';
+      for (let i = 0; i < braces; i++) jsonStr += '}';
+    }
+
+    const result = JSON.parse(jsonStr);
     state.sections = result.sections.map((s, i) => ({
       ...s,
       id: 's' + Date.now() + i,
