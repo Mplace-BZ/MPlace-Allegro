@@ -527,6 +527,39 @@ select.input-field { cursor: pointer; }
 .section-col { flex: 1; padding: 10px; min-height: 60px; }
 .section-col + .section-col { border-left: 1px solid var(--border); }
 .col-label { font-size: 9px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.section-heading-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 8px;
+  margin-bottom: 4px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.section-heading-input:hover { border-color: var(--border2); }
+.section-heading-input:focus { border-color: var(--accent); background: var(--bg3); }
+.section-content-input {
+  width: 100%;
+  min-height: 80px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 6px 8px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.section-content-input:hover { border-color: var(--border2); }
+.section-content-input:focus { border-color: var(--accent); background: var(--bg3); }
 .col-content { font-size: 11px; line-height: 1.6; color: var(--text2); white-space: pre-wrap; }
 .img-placeholder {
   display: flex;
@@ -740,7 +773,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.7</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.8</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1622,8 +1655,10 @@ function createSectionCard(section, idx) {
 }
 
 function renderSectionBody(section) {
-  const txt = (section.heading ? `**${section.heading}**\n\n` : '') + (section.content || '');
-  const textCol = `<div class="section-col"><div class="col-label">Tekst</div><div class="col-content">${escHtml(txt)}</div></div>`;
+  const textCol = `<div class="section-col"><div class="col-label">Tekst</div>
+    <input class="section-heading-input" value="${escAttr(section.heading||'')}" placeholder="Nagłówek sekcji…" onchange="updateSectionField('${section.id}','heading',this.value)" onblur="updateSectionField('${section.id}','heading',this.value)">
+    <textarea class="section-content-input" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)">${escHtml(section.content||'')}</textarea>
+  </div>`;
   const imgSlot = (slot) => {
     const img = section['image_'+slot] || section.image;
     return img
@@ -1644,9 +1679,19 @@ function renderSectionBody(section) {
 
 function escHtml(t) {
   if (!t) return '';
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-          .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-          .replace(/\n/g,'<br>');
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escAttr(t) {
+  if (!t) return '';
+  return t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateSectionField(id, field, value) {
+  const s = state.sections.find(s => s.id === id);
+  if (!s || s[field] === value) return;
+  s[field] = value;
+  refreshPreview();
 }
 
 // ── SECTION ACTIONS ──
