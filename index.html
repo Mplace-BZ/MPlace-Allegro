@@ -782,13 +782,14 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.3</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.4</span>
     <span class="logo-sep">|</span>
     <span class="logo-date" id="topbarDate"></span>
   </div>
   <div class="topbar-nav">
     <div class="topbar-clients" id="topbarClients"></div>
     <div class="topbar-add-client" onclick="openAddClient()">+</div>
+    <div class="topbar-add-client" onclick="deleteActiveClient()" style="color:var(--red);border-color:rgba(255,77,106,.3);" title="Usuń wybranego klienta">−</div>
     <button class="nav-tab" id="guidelinesBtn" onclick="openGuidelines()" style="display:none;">Wiki</button>
     <button class="nav-tab" id="templateBtn" onclick="openTemplateModal()" style="display:none;">Szablon</button>
     <button class="nav-tab green" onclick="newAuction()">+ Nowa</button>
@@ -1107,7 +1108,6 @@ async function loadClients() {
 async function seedDemoClients() {
   const demos = [
     { name: 'Botamed', initials: 'BOT', group: 'LUXSEN', createdAt: firebase.firestore.FieldValue.serverTimestamp() },
-    { name: 'Demo Klient', initials: 'DEM', group: '', createdAt: firebase.firestore.FieldValue.serverTimestamp() },
   ];
   for (const c of demos) await clientsCol().add(c);
 }
@@ -1124,6 +1124,11 @@ function renderClients() {
     el.innerHTML = `${c.name}${c.guidelines ? '<span class="tpl-dot">◈</span>' : ''}`;
     bar.appendChild(el);
   });
+}
+
+function deleteActiveClient() {
+  if (!state.activeClient) { toast('Wybierz klienta do usunięcia', 'error'); return; }
+  deleteClient(state.activeClient.id, state.activeClient.name);
 }
 
 async function deleteClient(id, name) {
