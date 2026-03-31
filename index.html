@@ -608,6 +608,66 @@ select.input-field { cursor: pointer; }
 .modal-field label { font-size: 11px; color: var(--text2); margin-bottom: 4px; display: block; font-family: var(--mono); }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
 
+/* ── GUIDELINES MODAL (wide) ── */
+.modal-wide {
+  width: 720px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+.guidelines-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.guidelines-textarea {
+  width: 100%;
+  min-height: 340px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+  padding: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.guidelines-textarea:focus { border-color: var(--accent); }
+.guidelines-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.guidelines-tab {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-family: var(--mono);
+  border-radius: var(--radius);
+  cursor: pointer;
+  border: 1px solid transparent;
+  color: var(--text2);
+  transition: all 0.15s;
+}
+.guidelines-tab:hover { background: var(--bg3); }
+.guidelines-tab.active { background: rgba(255,107,53,.1); border-color: rgba(255,107,53,.3); color: var(--accent); }
+.guidelines-hint {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+  line-height: 1.5;
+  padding: 8px;
+  background: var(--bg3);
+  border-radius: var(--radius);
+}
+
 /* ── TOAST ── */
 .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 999; }
 .toast {
@@ -680,10 +740,11 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.2</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.3</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
+  <button class="btn btn-ghost" id="guidelinesBtn" onclick="openGuidelines()" style="font-size:11px;padding:4px 10px;display:none;">Wiki</button>
   <div class="history-dropdown">
     <div class="history-toggle" onclick="toggleHistoryMenu()">Historia ▾</div>
     <div class="history-menu" id="historyMenu"></div>
@@ -810,6 +871,27 @@ select.input-field { cursor: pointer; }
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('clientModal')">Anuluj</button>
       <button class="btn btn-primary" onclick="addClient()">Dodaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GUIDELINES -->
+<div class="modal-overlay" id="guidelinesModal">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="modal-title" style="margin-bottom:0;">Wytyczne marki: <span id="guidelinesClientName"></span></div>
+      <button class="btn btn-ghost" onclick="closeModal('guidelinesModal')" style="font-size:14px;padding:2px 8px;">✕</button>
+    </div>
+    <div class="guidelines-hint">
+      Opisz zasady tworzenia aukcji dla tej marki. AI będzie się nimi kierować przy generowaniu.<br>
+      Możesz definiować: emoji, formatowanie, stałe treści, strukturę sekcji, nagłówki.
+    </div>
+    <div class="guidelines-editor">
+      <textarea class="guidelines-textarea" id="guidelinesText" placeholder="Wpisz wytyczne marki..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('guidelinesModal')">Anuluj</button>
+      <button class="btn btn-primary" onclick="saveGuidelines()">Zapisz wytyczne</button>
     </div>
   </div>
 </div>
@@ -953,7 +1035,7 @@ function renderClients() {
     const el = document.createElement('div');
     el.className = 'topbar-client' + (state.activeClient?.id === c.id ? ' active' : '');
     el.onclick = () => selectClient(c.id);
-    el.innerHTML = `${c.name}${c.template ? '<span class="tpl-dot">◈</span>' : ''}`;
+    el.innerHTML = `${c.name}${c.guidelines ? '<span class="tpl-dot">◈</span>' : ''}`;
     bar.appendChild(el);
   });
 }
@@ -968,6 +1050,8 @@ function selectClient(id) {
   renderHistory();
   updateClientDropdown();
   updateTemplateBtn();
+  // Show Wiki button when client is selected
+  document.getElementById('guidelinesBtn').style.display = state.activeClient ? 'inline-flex' : 'none';
 }
 
 function updateTemplateBtn() {
@@ -1004,6 +1088,90 @@ async function saveTemplate() {
     console.error(e);
     setSyncState('error');
     toast('Błąd zapisu szablonu: ' + e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════
+// GUIDELINES — Brand Wiki
+// ══════════════════════════════════════════════
+function openGuidelines() {
+  if (!state.activeClient) return;
+  document.getElementById('guidelinesClientName').textContent = state.activeClient.name;
+  document.getElementById('guidelinesText').value = state.activeClient.guidelines || getDefaultGuidelines(state.activeClient.name);
+  openModal('guidelinesModal');
+}
+
+function getDefaultGuidelines(brandName) {
+  return `=== WYTYCZNE MARKI: ${brandName} ===
+
+── FORMATOWANIE ──
+Nagłówki H2: KAPITALIKAMI
+Emoji dla nagłówków: ✅
+Emoji dla bullet pointów: 🔹
+Pogrubienia: stosować w kluczowych frazach
+
+── STRUKTURA SEKCJI ──
+Opisz kolejność sekcji aukcji. Sekcje oznaczone [STAŁE] mają zawsze tę samą treść.
+Sekcje oznaczone [DYNAMICZNE] są wypełniane z treści produktu.
+
+1. [TYTUŁ] - DYNAMICZNE - Nazwa produktu
+2. [AKAPIT] - DYNAMICZNE - Krótki opis z bullet pointami
+3. [KIEDY SIĘGNĄĆ] - DYNAMICZNE - "KIEDY SIĘGNĄĆ PO [nazwa]?"
+4. [HASŁO] - DYNAMICZNE - Hasło + akapit opisowy
+5. [KORZYŚCI] - DYNAMICZNE - Szczegółowe korzyści w kategoriach
+6. [SKŁADNIKI] - DYNAMICZNE - Lista składników z opisami
+7. [JAKOŚĆ] - STAŁE
+8. [TECHNOLOGIA] - STAŁE
+9. [SKŁAD] - DYNAMICZNE - Pełny skład produktu
+10. [SPOSÓB UŻYCIA] - DYNAMICZNE
+11. [PRZECHOWYWANIE] - DYNAMICZNE
+12. [PRODUCENT] - STAŁE
+
+── STAŁE TREŚCI ──
+
+[JAKOŚĆ]
+Nagłówek: NAJWYŻSZA JAKOŚĆ
+Treść: Każdy z naszych produktów przeszedł szczegółowe badania, aby zapewnić najwyższą jakość, skuteczność i bezpieczeństwo.
+
+Surowce wykorzystywane w naszych produktach pochodzą jedynie od sprawdzonych dostawców, a każdy etap produkcji jest przez nas starannie nadzorowany.
+
+Wszystkie nasze suplementy tworzymy sami, wykorzystując do tego nowoczesne linie produkcyjne.
+
+[TECHNOLOGIA]
+Nagłówek: TECHNOLOGIA LIPOSOMALNA – NAJWYŻSZA BIODOSTĘPNOŚĆ
+Treść: Technologia liposomalna zapewnia naszym ziołom i witaminom stabilność, efektywne wchłanianie i ochronę wrażliwych składników. Co czyni je bardziej praktycznym wyborem.
+
+Systemy liposomalne są bezpieczną formą enkapsulacji składników, zapewniając optymalną wchłanialność i biokompatybilność.
+
+[PRODUCENT]
+Nagłówek: BOTAMED
+Treść: Polska firma produkująca suplementy diety pochodzenia naturalnego z wykorzystaniem wyselekcjonowanych ziół, olejków eterycznych i witamin.
+
+Botanical & Medicinal Research skoncentrowała swoją produkcję na zaawansowanych technologicznie, liposomalnych systemach dostarczania składników odżywczych, minerałów i witamin. Systemy liposomalne są bezpieczną formą enkapsulacji składników, zapewniając optymalną dystrybucję składników po organizmie.
+
+── UWAGI ──
+Dodaj tutaj dodatkowe wskazówki...
+`;
+}
+
+async function saveGuidelines() {
+  if (!state.activeClient) return;
+  const guidelines = document.getElementById('guidelinesText').value;
+
+  setSyncState('syncing');
+  try {
+    await clientsCol().doc(state.activeClient.id).update({ guidelines });
+    state.activeClient.guidelines = guidelines;
+    const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
+    if (idx >= 0) state.clients[idx].guidelines = guidelines;
+    setSyncState('synced');
+    renderClients();
+    closeModal('guidelinesModal');
+    toast('Wytyczne zapisane', 'success');
+  } catch(e) {
+    console.error(e);
+    setSyncState('error');
+    toast('Błąd zapisu wytycznych: ' + e.message, 'error');
   }
 }
 
@@ -1210,18 +1378,23 @@ async function generateSections() {
   setStatus('active', 'Analizuję treść...');
   document.getElementById('generateBtn').disabled = true;
 
-  // Build template instruction if client has one
-  let templateInstruction = '';
-  if (state.activeClient?.template) {
-    const tpl = state.activeClient.template;
-    templateInstruction = `\n\nKLIENT MA ZAPISANY SZABLON — MUSISZ go dokładnie odwzorować.
-Szablon sekcji (w tej kolejności):
-${tpl.map((s, i) => `${i+1}. type: "${s.type}", heading: "${s.heading}"`).join('\n')}
+  // Build guidelines instruction
+  let guidelinesBlock = '';
+  if (state.activeClient?.guidelines) {
+    guidelinesBlock = `\n\n══ WYTYCZNE MARKI: ${state.activeClient.name} ══
+MUSISZ ściśle przestrzegać poniższych wytycznych marki. Są to zasady klienta — mają najwyższy priorytet.
 
-Użyj DOKŁADNIE tych typów sekcji i nagłówków. Wypełnij treścią z wklejonego tekstu produktu. Jeśli w szablonie jest nagłówek — zachowaj jego styl, ale dostosuj do nowego produktu.`;
+${state.activeClient.guidelines}
+
+ZASADY STOSOWANIA WYTYCZNYCH:
+- Sekcje oznaczone [STAŁE] — wstaw dokładnie tę treść, nie zmieniaj jej
+- Sekcje oznaczone [DYNAMICZNE] — wypełnij treścią z wklejonego tekstu produktu
+- Użyj DOKŁADNIE tych emoji UTF, które podano w wytycznych
+- Nagłówki H2 pisz DOKŁADNIE w stylu podanym w wytycznych (np. KAPITALIKAMI)
+- Zachowaj kolejność sekcji z wytycznych`;
   }
 
-  const systemPrompt = `Jesteś ekspertem od tworzenia aukcji Allegro. Analizujesz treść produktu i dzielisz ją na sekcje zgodnie z dostępnymi layoutami Allegro.
+  const systemPrompt = `Jesteś ekspertem od tworzenia aukcji Allegro. Analizujesz treść produktu i dzielisz ją na sekcje.
 
 Dostępne typy sekcji:
 - TEXT_ONLY: Tylko tekst
@@ -1230,15 +1403,11 @@ Dostępne typy sekcji:
 - TEXT_LEFT_IMAGE_RIGHT: Tekst po lewej, zdjęcie po prawej
 - IMAGE_IMAGE: Dwa zdjęcia obok siebie
 
-Zasady:
-1. Pierwsza sekcja: tytuł produktu (TEXT_ONLY)
+Zasady ogólne:
+1. WAŻNE: Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj
 2. Sekcje z korzyściami: IMAGE_LEFT_TEXT_RIGHT lub TEXT_LEFT_IMAGE_RIGHT (naprzemiennie)
-3. Składniki i skład: TEXT_ONLY
-4. Sposób użycia: TEXT_ONLY
-5. Minimum 6 sekcji
-6. Punkty listy formatuj jako: ◆ treść punktu
-7. WAŻNE: Wykorzystaj CAŁĄ wklejoną treść — nic nie pomijaj. Każda informacja z tekstu źródłowego musi znaleźć się w którejś sekcji.
-${templateInstruction}
+3. Minimum 6 sekcji
+${guidelinesBlock}
 
 Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy).
 WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wartości jako \\", nowe linie jako \\n.
