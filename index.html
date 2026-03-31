@@ -740,7 +740,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.3</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.4</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1552,6 +1552,7 @@ function createSectionCard(section, idx) {
       <div class="section-actions">
         <button class="icon-btn" onclick="moveSectionUp(${idx})" title="Wyżej">↑</button>
         <button class="icon-btn" onclick="moveSectionDown(${idx})" title="Niżej">↓</button>
+        <button class="icon-btn" onclick="duplicateSection(${idx})" title="Duplikuj">⧉</button>
         <button class="icon-btn danger" onclick="removeSection('${section.id}')" title="Usuń">✕</button>
       </div>
     </div>
@@ -1613,6 +1614,13 @@ function moveSectionUp(idx) {
 function moveSectionDown(idx) {
   if (idx >= state.sections.length-1) return;
   [state.sections[idx], state.sections[idx+1]] = [state.sections[idx+1], state.sections[idx]];
+  renderSections(); refreshPreview();
+}
+
+function duplicateSection(idx) {
+  const original = state.sections[idx];
+  const copy = { ...JSON.parse(JSON.stringify(original)), id: 's' + Date.now() };
+  state.sections.splice(idx + 1, 0, copy);
   renderSections(); refreshPreview();
 }
 
