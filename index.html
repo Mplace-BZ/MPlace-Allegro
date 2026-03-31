@@ -799,7 +799,7 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:9px;opacity:.35;">v5.7</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:9px;opacity:.35;">v5.8</span>
     <span class="logo-sep">|</span>
     <span class="logo-date" id="topbarDate"></span>
   </div>
@@ -1481,6 +1481,7 @@ function loadAuction(id) {
   refreshPreview();
   document.getElementById('toolbarLabel').textContent = auction.title || 'Bez tytułu';
   document.getElementById('exportBtn').style.display = 'flex';
+  setTimeout(autoResizeAllTextareas, 100);
   toast('Aukcja załadowana');
 }
 
@@ -1810,6 +1811,7 @@ KRYTYCZNE ZASADY JSON:
     refreshPreview();
   
     setStatus('', 'Gotowy');
+    setTimeout(autoResizeAllTextareas, 100);
     toast(`Wygenerowano ${state.sections.length} sekcji`, 'success');
 
   } catch(err) {
@@ -1846,7 +1848,7 @@ function renderSections() {
   });
 
   // Restore scroll position + auto-resize textareas
-  requestAnimationFrame(() => { list.scrollTop = scrollTop; autoResizeAllTextareas(); });
+  setTimeout(() => { list.scrollTop = scrollTop; autoResizeAllTextareas(); }, 50);
 }
 
 function createSectionCard(section, idx) {
@@ -1883,7 +1885,7 @@ function createSectionCard(section, idx) {
 function renderSectionBody(section) {
   const textCol = `<div class="section-col"><div class="col-label">Tekst</div>
     <input class="section-heading-input" value="${escAttr(section.heading||'')}" placeholder="Nagłówek sekcji…" onchange="updateSectionField('${section.id}','heading',this.value)" onblur="updateSectionField('${section.id}','heading',this.value)">
-    <textarea class="section-content-input" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)">${escHtml(section.content||'')}</textarea>
+    <textarea class="section-content-input" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)" onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${escHtml(section.content||'')}</textarea>
   </div>`;
   const imgSlot = (slot) => {
     const img = section['image_'+slot] || section.image;
