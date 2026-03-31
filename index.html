@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.6</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.7-debug</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1688,7 +1688,15 @@ KRYTYCZNE ZASADY JSON:
       }
     }
 
-    const result = JSON.parse(jsonStr);
+    console.log('JSON to parse:', jsonStr);
+    let result;
+    try {
+      result = JSON.parse(jsonStr);
+    } catch(parseErr) {
+      console.error('JSON parse failed at:', parseErr.message);
+      console.log('Around error:', jsonStr.substring(3350, 3450));
+      throw parseErr;
+    }
     state.sections = result.sections.map((s, i) => ({
       ...s,
       id: 's' + Date.now() + i,
