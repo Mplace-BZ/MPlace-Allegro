@@ -376,8 +376,9 @@ body {
 
 /* ── INPUT PANEL ── */
 .input-panel {
-  width: 380px;
-  min-width: 300px;
+  width: 320px;
+  min-width: 240px;
+  flex-shrink: 0;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -587,7 +588,7 @@ select.input-field { cursor: pointer; }
 /* ── PREVIEW ── */
 .preview-panel {
   flex: 1;
-  min-width: 400px;
+  min-width: 280px;
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -777,11 +778,12 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.1</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.2</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
   <button class="btn btn-ghost" id="guidelinesBtn" onclick="openGuidelines()" style="font-size:11px;padding:4px 10px;display:none;">Wiki</button>
+  <button class="btn btn-ghost" id="templateBtn" onclick="openTemplateModal()" style="font-size:11px;padding:4px 10px;display:none;">Szablon</button>
   <div class="history-dropdown">
     <div class="history-toggle" onclick="toggleHistoryMenu()">Historia ▾</div>
     <div class="history-menu" id="historyMenu"></div>
@@ -929,6 +931,28 @@ select.input-field { cursor: pointer; }
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('guidelinesModal')">Anuluj</button>
       <button class="btn btn-primary" onclick="saveGuidelines()">Zapisz wytyczne</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TEMPLATE -->
+<div class="modal-overlay" id="templateModal">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="modal-title" style="margin-bottom:0;">Szablon: <span id="templateClientName"></span></div>
+      <button class="btn btn-ghost" onclick="closeModal('templateModal')" style="font-size:14px;padding:2px 8px;">✕</button>
+    </div>
+    <div class="guidelines-hint">
+      Układ sekcji aukcji. Zmień typ, nagłówek lub kolejność. AI odwzoruje ten układ przy generowaniu.
+    </div>
+    <div id="templateSections" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:8px 0;min-height:200px;max-height:50vh;"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-ghost" onclick="addTemplateSection()" style="flex:1;">+ Dodaj sekcję</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('templateModal')">Anuluj</button>
+      <button class="btn btn-ghost btn-danger" onclick="deleteTemplate()">Usuń szablon</button>
+      <button class="btn btn-primary" onclick="saveTemplateFromModal()">Zapisz szablon</button>
     </div>
   </div>
 </div>
@@ -1105,46 +1129,81 @@ function selectClient(id) {
   renderClients();
   renderHistory();
   updateClientDropdown();
-  updateTemplateBtn();
+
   // Show Wiki button when client is selected
   document.getElementById('guidelinesBtn').style.display = state.activeClient ? 'inline-flex' : 'none';
+  document.getElementById('templateBtn').style.display = state.activeClient ? 'inline-flex' : 'none';
+  document.getElementById('saveTemplateBtn').style.display = (state.sections.length > 0 && state.activeClient) ? 'inline-flex' : 'none';
 }
 
-function updateTemplateBtn() {
-  const btn = document.getElementById('saveTemplateBtn');
-  btn.style.display = (state.sections.length > 0 && state.activeClient) ? 'inline-flex' : 'none';
-  if (state.activeClient?.template) {
-    btn.textContent = '◈ Aktualizuj szablon';
-  } else {
-    btn.textContent = '◈ Zapisz szablon';
-  }
-}
+// ══════════════════════════════════════════════
+// TEMPLATE — Section layout per client
+// ══════════════════════════════════════════════
+let editingTemplate = [];
 
-async function saveTemplate() {
+function saveTemplate() {
   if (!state.activeClient || state.sections.length === 0) return;
+  document.getElementById('templateClientName').textContent = state.activeClient.name;
+  editingTemplate = state.sections.map(s => ({ type: s.type, heading: s.heading || '' }));
+  renderTemplateEditor();
+  openModal('templateModal');
+}
 
-  const template = state.sections.map(s => ({
-    type: s.type,
-    heading: s.heading || '',
-    hasContent: !!(s.content && s.content.trim()),
-  }));
+function openTemplateModal() {
+  if (!state.activeClient) return;
+  document.getElementById('templateClientName').textContent = state.activeClient.name;
+  editingTemplate = JSON.parse(JSON.stringify(state.activeClient.template || []));
+  if (editingTemplate.length === 0) {
+    editingTemplate = [{ type: 'TEXT_ONLY', heading: '' }, { type: 'IMAGE_LEFT_TEXT_RIGHT', heading: '' }, { type: 'TEXT_LEFT_IMAGE_RIGHT', heading: '' }];
+  }
+  renderTemplateEditor();
+  openModal('templateModal');
+}
 
+function renderTemplateEditor() {
+  const container = document.getElementById('templateSections');
+  container.innerHTML = '';
+  const typeLabels = { 'TEXT_ONLY':'Tekst', 'IMAGE_ONLY':'Zdjęcie', 'IMAGE_LEFT_TEXT_RIGHT':'Zdj.L / Tekst P', 'TEXT_LEFT_IMAGE_RIGHT':'Tekst L / Zdj.P', 'IMAGE_IMAGE':'Zdj. / Zdj.' };
+  editingTemplate.forEach((s, i) => {
+    const opts = Object.entries(typeLabels).map(([v,l]) => `<option value="${v}"${s.type===v?' selected':''}>${l}</option>`).join('');
+    const el = document.createElement('div');
+    el.style.cssText = 'display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border);';
+    el.innerHTML = `<span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:20px;">${i+1}.</span><select class="section-type-select" onchange="editingTemplate[${i}].type=this.value" style="flex:0 0 160px;">${opts}</select><input class="input-field" value="${escAttr(s.heading)}" placeholder="Nagłówek…" onchange="editingTemplate[${i}].heading=this.value" style="flex:1;font-size:11px;"><button class="icon-btn" onclick="moveTemplateUp(${i})">↑</button><button class="icon-btn" onclick="moveTemplateDown(${i})">↓</button><button class="icon-btn danger" onclick="removeTemplateSection(${i})">✕</button>`;
+    container.appendChild(el);
+  });
+}
+
+function addTemplateSection() { editingTemplate.push({ type: 'TEXT_ONLY', heading: '' }); renderTemplateEditor(); }
+function removeTemplateSection(i) { editingTemplate.splice(i, 1); renderTemplateEditor(); }
+function moveTemplateUp(i) { if (i===0) return; [editingTemplate[i-1],editingTemplate[i]]=[editingTemplate[i],editingTemplate[i-1]]; renderTemplateEditor(); }
+function moveTemplateDown(i) { if (i>=editingTemplate.length-1) return; [editingTemplate[i],editingTemplate[i+1]]=[editingTemplate[i+1],editingTemplate[i]]; renderTemplateEditor(); }
+
+async function saveTemplateFromModal() {
+  if (!state.activeClient) return;
   setSyncState('syncing');
   try {
-    await clientsCol().doc(state.activeClient.id).update({ template });
-    state.activeClient.template = template;
-    // Update in state.clients array too
+    await clientsCol().doc(state.activeClient.id).update({ template: editingTemplate });
+    state.activeClient.template = JSON.parse(JSON.stringify(editingTemplate));
     const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
-    if (idx >= 0) state.clients[idx].template = template;
+    if (idx >= 0) state.clients[idx].template = state.activeClient.template;
     setSyncState('synced');
-    renderClients();
-    updateTemplateBtn();
-    toast(`Szablon zapisany (${template.length} sekcji)`, 'success');
-  } catch(e) {
-    console.error(e);
-    setSyncState('error');
-    toast('Błąd zapisu szablonu: ' + e.message, 'error');
-  }
+    closeModal('templateModal');
+    toast(`Szablon zapisany (${editingTemplate.length} sekcji)`, 'success');
+  } catch(e) { setSyncState('error'); toast('Błąd: ' + e.message, 'error'); }
+}
+
+async function deleteTemplate() {
+  if (!state.activeClient || !confirm('Usunąć szablon?')) return;
+  setSyncState('syncing');
+  try {
+    await clientsCol().doc(state.activeClient.id).update({ template: firebase.firestore.FieldValue.delete() });
+    delete state.activeClient.template;
+    const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
+    if (idx >= 0) delete state.clients[idx].template;
+    setSyncState('synced');
+    closeModal('templateModal');
+    toast('Szablon usunięty', 'success');
+  } catch(e) { setSyncState('error'); toast('Błąd: ' + e.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════
@@ -1338,12 +1397,14 @@ function toggleHistoryMenu() {
   document.getElementById('historyMenu').classList.toggle('open');
 }
 
-// Close history menu on outside click
+// Close history menu on outside click (delayed to allow item click)
 document.addEventListener('click', e => {
-  const dd = document.querySelector('.history-dropdown');
-  if (dd && !dd.contains(e.target)) {
-    document.getElementById('historyMenu')?.classList.remove('open');
-  }
+  setTimeout(() => {
+    const dd = document.querySelector('.history-dropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('historyMenu')?.classList.remove('open');
+    }
+  }, 100);
 });
 
 function formatDate(ts) {
@@ -1452,6 +1513,10 @@ ZASADY STOSOWANIA WYTYCZNYCH:
 - Użyj DOKŁADNIE tych emoji UTF, które podano w wytycznych
 - Nagłówki H2 pisz DOKŁADNIE w stylu podanym w wytycznych (np. KAPITALIKAMI)
 - Zachowaj kolejność sekcji z wytycznych`;
+  }
+  if (state.activeClient?.template) {
+    const tpl = state.activeClient.template;
+    guidelinesBlock += `\n\n══ SZABLON SEKCJI ══\nMUSISZ odwzorować DOKŁADNIE ten układ sekcji:\n${tpl.map((s, i) => `${i+1}. type: "${s.type}", heading: "${s.heading}"`).join('\n')}\n\nUżyj DOKŁADNIE tych typów sekcji w tej kolejności.`;
   }
 
   const systemPrompt = `Jesteś profesjonalnym COPYWRITEREM aukcji Allegro dla produktów zdrowotnych.
@@ -1579,8 +1644,12 @@ WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wa
 
     let jsonStr = jsonMatch[0];
 
-    // Repair truncated JSON — auto-close brackets
+    // Repair broken JSON
     try { JSON.parse(jsonStr); } catch(e) {
+      // Fix unescaped newlines inside strings
+      jsonStr = jsonStr.replace(/:\s*"([^"]*)"/g, (match) => {
+        return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+      });
       // Remove trailing incomplete entry (after last complete },)
       jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
       // Close open arrays and objects
@@ -1588,6 +1657,14 @@ WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wa
       const braces = (jsonStr.match(/\{/g)||[]).length - (jsonStr.match(/\}/g)||[]).length;
       for (let i = 0; i < opens; i++) jsonStr += ']';
       for (let i = 0; i < braces; i++) jsonStr += '}';
+      // Last resort — try to extract valid sections
+      try { JSON.parse(jsonStr); } catch(e2) {
+        // Find last complete section
+        const lastGood = jsonStr.lastIndexOf('}');
+        if (lastGood > 0) {
+          jsonStr = jsonStr.substring(0, lastGood + 1) + ']}';
+        }
+      }
     }
 
     const result = JSON.parse(jsonStr);
@@ -1606,7 +1683,7 @@ WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wa
 
     renderSections();
     refreshPreview();
-    updateTemplateBtn();
+  
     setStatus('', 'Gotowy');
     toast(`Wygenerowano ${state.sections.length} sekcji`, 'success');
 
