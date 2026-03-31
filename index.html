@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.4</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.5</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1645,25 +1645,40 @@ WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wa
     let jsonStr = jsonMatch[0];
 
     // Repair broken JSON
-    try { JSON.parse(jsonStr); } catch(e) {
-      // Fix unescaped newlines inside strings
-      jsonStr = jsonStr.replace(/:\s*"([^"]*)"/g, (match) => {
-        return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
-      });
-      // Remove trailing incomplete entry (after last complete },)
-      jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
-      // Close open arrays and objects
-      const opens = (jsonStr.match(/\[/g)||[]).length - (jsonStr.match(/\]/g)||[]).length;
-      const braces = (jsonStr.match(/\{/g)||[]).length - (jsonStr.match(/\}/g)||[]).length;
-      for (let i = 0; i < opens; i++) jsonStr += ']';
-      for (let i = 0; i < braces; i++) jsonStr += '}';
-      // Last resort — try to extract valid sections
-      try { JSON.parse(jsonStr); } catch(e2) {
-        // Find last complete section
-        const lastGood = jsonStr.lastIndexOf('}');
-        if (lastGood > 0) {
-          jsonStr = jsonStr.substring(0, lastGood + 1) + ']}';
+    function repairJSON(str) {
+      // Replace actual newlines/tabs inside string values with escaped versions
+      let result = '';
+      let inString = false;
+      let escaped = false;
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        if (escaped) { result += ch; escaped = false; continue; }
+        if (ch === '\\' && inString) { result += ch; escaped = true; continue; }
+        if (ch === '"') { inString = !inString; result += ch; continue; }
+        if (inString) {
+          if (ch === '\n') { result += '\\n'; continue; }
+          if (ch === '\r') { result += '\\r'; continue; }
+          if (ch === '\t') { result += '\\t'; continue; }
         }
+        result += ch;
+      }
+      return result;
+    }
+
+    try { JSON.parse(jsonStr); } catch(e) {
+      jsonStr = repairJSON(jsonStr);
+      // Remove trailing incomplete entry
+      try { JSON.parse(jsonStr); } catch(e2) {
+        jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
+        const opens = (jsonStr.match(/\[/g)||[]).length - (jsonStr.match(/\]/g)||[]).length;
+        const braces = (jsonStr.match(/\{/g)||[]).length - (jsonStr.match(/\}/g)||[]).length;
+        for (let i = 0; i < opens; i++) jsonStr += ']';
+        for (let i = 0; i < braces; i++) jsonStr += '}';
+      }
+      // Last resort
+      try { JSON.parse(jsonStr); } catch(e3) {
+        const lastGood = jsonStr.lastIndexOf('"}');
+        if (lastGood > 0) jsonStr = jsonStr.substring(0, lastGood + 2) + ']}';
       }
     }
 
