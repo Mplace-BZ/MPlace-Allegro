@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.7-debug</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.8</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1688,14 +1688,21 @@ KRYTYCZNE ZASADY JSON:
       }
     }
 
-    console.log('JSON to parse:', jsonStr);
     let result;
     try {
       result = JSON.parse(jsonStr);
     } catch(parseErr) {
-      console.error('JSON parse failed at:', parseErr.message);
-      console.log('Around error:', jsonStr.substring(3350, 3450));
-      throw parseErr;
+      // Regex fallback — extract sections even from broken JSON
+      console.warn('JSON repair failed, using regex extraction:', parseErr.message);
+      const sections = [];
+      const sectionRegex = /"type"\s*:\s*"([^"]+)"\s*,\s*"heading"\s*:\s*"([^"]*?)"\s*,\s*"content"\s*:\s*"([\s\S]*?)(?:"\s*\})/g;
+      let m;
+      while ((m = sectionRegex.exec(jsonStr)) !== null) {
+        sections.push({ type: m[1], heading: m[2].replace(/\\n/g,'\n').replace(/\\"/g,'"'), content: m[3].replace(/\\n/g,'\n').replace(/\\"/g,'"') });
+      }
+      if (sections.length === 0) throw new Error('Nie udało się odczytać sekcji z odpowiedzi AI');
+      result = { sections };
+      toast(`Odzyskano ${sections.length} sekcji (naprawa JSON)`, 'success');
     }
     state.sections = result.sections.map((s, i) => ({
       ...s,
