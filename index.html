@@ -45,12 +45,10 @@ body {
   font-family: var(--sans);
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
-html { height: 100%; }
 
 /* ── LOGIN SCREEN ── */
 #loginScreen {
@@ -218,8 +216,7 @@ html { height: 100%; }
   display: flex;
   flex: 1;
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
+  height: calc(100vh - 52px);
 }
 
 /* ── SIDEBAR (removed — clients moved to topbar) ── */
@@ -354,8 +351,6 @@ html { height: 100%; }
   padding: 0 14px;
   gap: 8px;
   flex-shrink: 0;
-  overflow: hidden;
-  white-space: nowrap;
 }
 .toolbar-name {
   font-size: 12px;
@@ -379,9 +374,8 @@ html { height: 100%; }
 
 /* ── INPUT PANEL ── */
 .input-panel {
-  width: 320px;
-  min-width: 240px;
-  flex-shrink: 0;
+  width: 380px;
+  min-width: 300px;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -529,14 +523,14 @@ select.input-field { cursor: pointer; }
 }
 .icon-btn:hover { background: var(--bg); color: var(--text2); }
 .icon-btn.danger:hover { background: var(--red-bg); color: var(--red); }
-.section-body { display: flex; }
-.section-col { flex: 1; padding: 10px; min-height: 60px; }
+.section-body { display: flex; align-items: stretch; }
+.section-col { flex: 1; padding: 10px; min-height: 60px; display: flex; flex-direction: column; }
 .section-col + .section-col { border-left: 1px solid var(--border); }
 .col-label { font-size: 9px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
 .section-heading-input {
   width: 100%;
-  background: #161b27;
-  border: 1px solid #2a3040;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--sans);
@@ -551,9 +545,10 @@ select.input-field { cursor: pointer; }
 .section-heading-input:focus { border-color: var(--accent); background: var(--bg3); }
 .section-content-input {
   width: 100%;
-  min-height: 150px;
-  background: #161b27;
-  border: 1px solid #2a3040;
+  min-height: 80px;
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--mono);
@@ -590,7 +585,7 @@ select.input-field { cursor: pointer; }
 /* ── PREVIEW ── */
 .preview-panel {
   flex: 1;
-  min-width: 200px;
+  min-width: 400px;
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -780,12 +775,11 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.9</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.0</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
   <button class="btn btn-ghost" id="guidelinesBtn" onclick="openGuidelines()" style="font-size:11px;padding:4px 10px;display:none;">Wiki</button>
-  <button class="btn btn-ghost" id="templateBtn" onclick="openTemplateModal()" style="font-size:11px;padding:4px 10px;display:none;">Szablon</button>
   <div class="history-dropdown">
     <div class="history-toggle" onclick="toggleHistoryMenu()">Historia ▾</div>
     <div class="history-menu" id="historyMenu"></div>
@@ -933,28 +927,6 @@ select.input-field { cursor: pointer; }
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('guidelinesModal')">Anuluj</button>
       <button class="btn btn-primary" onclick="saveGuidelines()">Zapisz wytyczne</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: TEMPLATE -->
-<div class="modal-overlay" id="templateModal">
-  <div class="modal modal-wide">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div class="modal-title" style="margin-bottom:0;">Szablon: <span id="templateClientName"></span></div>
-      <button class="btn btn-ghost" onclick="closeModal('templateModal')" style="font-size:14px;padding:2px 8px;">✕</button>
-    </div>
-    <div class="guidelines-hint">
-      Układ sekcji aukcji. Zmień typ, nagłówek lub kolejność. AI odwzoruje ten układ przy generowaniu.
-    </div>
-    <div id="templateSections" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:8px 0;min-height:200px;max-height:50vh;"></div>
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="btn btn-ghost" onclick="addTemplateSection()" style="flex:1;">+ Dodaj sekcję</button>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('templateModal')">Anuluj</button>
-      <button class="btn btn-ghost btn-danger" onclick="deleteTemplate()">Usuń szablon</button>
-      <button class="btn btn-primary" onclick="saveTemplateFromModal()">Zapisz szablon</button>
     </div>
   </div>
 </div>
@@ -1131,132 +1103,45 @@ function selectClient(id) {
   renderClients();
   renderHistory();
   updateClientDropdown();
-
-  // Show Wiki and Szablon buttons when client is selected
+  updateTemplateBtn();
+  // Show Wiki button when client is selected
   document.getElementById('guidelinesBtn').style.display = state.activeClient ? 'inline-flex' : 'none';
-  updateTemplateUI();
 }
 
-// ══════════════════════════════════════════════
-// TEMPLATE — Section layout per client
-// ══════════════════════════════════════════════
-let editingTemplate = [];
-
-function updateTemplateUI() {
+function updateTemplateBtn() {
   const btn = document.getElementById('saveTemplateBtn');
   btn.style.display = (state.sections.length > 0 && state.activeClient) ? 'inline-flex' : 'none';
-  document.getElementById('templateBtn').style.display = state.activeClient ? 'inline-flex' : 'none';
+  if (state.activeClient?.template) {
+    btn.textContent = '◈ Aktualizuj szablon';
+  } else {
+    btn.textContent = '◈ Zapisz szablon';
+  }
 }
 
-function saveTemplate() {
+async function saveTemplate() {
   if (!state.activeClient || state.sections.length === 0) return;
-  // Open template editor pre-filled with current sections
-  document.getElementById('templateClientName').textContent = state.activeClient.name;
-  editingTemplate = state.sections.map(s => ({
+
+  const template = state.sections.map(s => ({
     type: s.type,
     heading: s.heading || '',
+    hasContent: !!(s.content && s.content.trim()),
   }));
-  renderTemplateEditor();
-  openModal('templateModal');
-}
 
-function openTemplateModal() {
-  if (!state.activeClient) return;
-  document.getElementById('templateClientName').textContent = state.activeClient.name;
-  editingTemplate = JSON.parse(JSON.stringify(state.activeClient.template || []));
-  if (editingTemplate.length === 0) {
-    editingTemplate = [
-      { type: 'TEXT_ONLY', heading: 'TYTUŁ PRODUKTU' },
-      { type: 'IMAGE_LEFT_TEXT_RIGHT', heading: '' },
-      { type: 'TEXT_LEFT_IMAGE_RIGHT', heading: '' },
-    ];
-  }
-  renderTemplateEditor();
-  openModal('templateModal');
-}
-
-function renderTemplateEditor() {
-  const container = document.getElementById('templateSections');
-  container.innerHTML = '';
-  const typeLabels = {
-    'TEXT_ONLY': 'Tekst',
-    'IMAGE_ONLY': 'Zdjęcie',
-    'IMAGE_LEFT_TEXT_RIGHT': 'Zdj.L / Tekst P',
-    'TEXT_LEFT_IMAGE_RIGHT': 'Tekst L / Zdj.P',
-    'IMAGE_IMAGE': 'Zdj. / Zdj.',
-  };
-  editingTemplate.forEach((s, i) => {
-    const opts = Object.entries(typeLabels).map(([v, l]) =>
-      `<option value="${v}"${s.type === v ? ' selected' : ''}>${l}</option>`
-    ).join('');
-    const el = document.createElement('div');
-    el.style.cssText = 'display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border);';
-    el.innerHTML = `
-      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:20px;">${i+1}.</span>
-      <select class="section-type-select" onchange="editingTemplate[${i}].type=this.value" style="flex:0 0 160px;">${opts}</select>
-      <input class="input-field" value="${escAttr(s.heading)}" placeholder="Nagłówek…" onchange="editingTemplate[${i}].heading=this.value" style="flex:1;font-size:11px;">
-      <button class="icon-btn" onclick="moveTemplateUp(${i})" title="Wyżej">↑</button>
-      <button class="icon-btn" onclick="moveTemplateDown(${i})" title="Niżej">↓</button>
-      <button class="icon-btn danger" onclick="removeTemplateSection(${i})" title="Usuń">✕</button>
-    `;
-    container.appendChild(el);
-  });
-}
-
-function addTemplateSection() {
-  editingTemplate.push({ type: 'TEXT_ONLY', heading: '' });
-  renderTemplateEditor();
-}
-
-function removeTemplateSection(idx) {
-  editingTemplate.splice(idx, 1);
-  renderTemplateEditor();
-}
-
-function moveTemplateUp(idx) {
-  if (idx === 0) return;
-  [editingTemplate[idx-1], editingTemplate[idx]] = [editingTemplate[idx], editingTemplate[idx-1]];
-  renderTemplateEditor();
-}
-
-function moveTemplateDown(idx) {
-  if (idx >= editingTemplate.length - 1) return;
-  [editingTemplate[idx], editingTemplate[idx+1]] = [editingTemplate[idx+1], editingTemplate[idx]];
-  renderTemplateEditor();
-}
-
-async function saveTemplateFromModal() {
-  if (!state.activeClient) return;
   setSyncState('syncing');
   try {
-    await clientsCol().doc(state.activeClient.id).update({ template: editingTemplate });
-    state.activeClient.template = JSON.parse(JSON.stringify(editingTemplate));
+    await clientsCol().doc(state.activeClient.id).update({ template });
+    state.activeClient.template = template;
+    // Update in state.clients array too
     const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
-    if (idx >= 0) state.clients[idx].template = state.activeClient.template;
+    if (idx >= 0) state.clients[idx].template = template;
     setSyncState('synced');
-    closeModal('templateModal');
-    toast(`Szablon zapisany (${editingTemplate.length} sekcji)`, 'success');
+    renderClients();
+    updateTemplateBtn();
+    toast(`Szablon zapisany (${template.length} sekcji)`, 'success');
   } catch(e) {
+    console.error(e);
     setSyncState('error');
-    toast('Błąd zapisu: ' + e.message, 'error');
-  }
-}
-
-async function deleteTemplate() {
-  if (!state.activeClient) return;
-  if (!confirm('Usunąć szablon?')) return;
-  setSyncState('syncing');
-  try {
-    await clientsCol().doc(state.activeClient.id).update({ template: firebase.firestore.FieldValue.delete() });
-    delete state.activeClient.template;
-    const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
-    if (idx >= 0) delete state.clients[idx].template;
-    setSyncState('synced');
-    closeModal('templateModal');
-    toast('Szablon usunięty', 'success');
-  } catch(e) {
-    setSyncState('error');
-    toast('Błąd: ' + e.message, 'error');
+    toast('Błąd zapisu szablonu: ' + e.message, 'error');
   }
 }
 
@@ -1451,14 +1336,12 @@ function toggleHistoryMenu() {
   document.getElementById('historyMenu').classList.toggle('open');
 }
 
-// Close history menu on outside click (delayed to allow item click)
+// Close history menu on outside click
 document.addEventListener('click', e => {
-  setTimeout(() => {
-    const dd = document.querySelector('.history-dropdown');
-    if (dd && !dd.contains(e.target)) {
-      document.getElementById('historyMenu')?.classList.remove('open');
-    }
-  }, 100);
+  const dd = document.querySelector('.history-dropdown');
+  if (dd && !dd.contains(e.target)) {
+    document.getElementById('historyMenu')?.classList.remove('open');
+  }
 });
 
 function formatDate(ts) {
@@ -1553,7 +1436,7 @@ async function generateSections() {
   setStatus('active', 'Analizuję treść...');
   document.getElementById('generateBtn').disabled = true;
 
-  // Build guidelines + template instruction
+  // Build guidelines instruction
   let guidelinesBlock = '';
   if (state.activeClient?.guidelines) {
     guidelinesBlock = `\n\n══ WYTYCZNE MARKI: ${state.activeClient.name} ══
@@ -1567,14 +1450,6 @@ ZASADY STOSOWANIA WYTYCZNYCH:
 - Użyj DOKŁADNIE tych emoji UTF, które podano w wytycznych
 - Nagłówki H2 pisz DOKŁADNIE w stylu podanym w wytycznych (np. KAPITALIKAMI)
 - Zachowaj kolejność sekcji z wytycznych`;
-  }
-  if (state.activeClient?.template) {
-    const tpl = state.activeClient.template;
-    guidelinesBlock += `\n\n══ SZABLON SEKCJI ══
-MUSISZ odwzorować DOKŁADNIE ten układ sekcji (typy i nagłówki):
-${tpl.map((s, i) => `${i+1}. type: "${s.type}", heading: "${s.heading}"`).join('\n')}
-
-Użyj DOKŁADNIE tych typów sekcji w tej kolejności. Nagłówki zachowaj lub dostosuj do nowego produktu zachowując styl.`;
   }
 
   const systemPrompt = `Jesteś profesjonalnym COPYWRITEREM aukcji Allegro dla produktów zdrowotnych.
@@ -1729,9 +1604,8 @@ WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wa
 
     renderSections();
     refreshPreview();
-  
+    updateTemplateBtn();
     setStatus('', 'Gotowy');
-    updateTemplateUI();
     toast(`Wygenerowano ${state.sections.length} sekcji`, 'success');
 
   } catch(err) {
@@ -1799,7 +1673,7 @@ function createSectionCard(section, idx) {
 function renderSectionBody(section) {
   const textCol = `<div class="section-col"><div class="col-label">Tekst</div>
     <input class="section-heading-input" value="${escAttr(section.heading||'')}" placeholder="Nagłówek sekcji…" onchange="updateSectionField('${section.id}','heading',this.value)" onblur="updateSectionField('${section.id}','heading',this.value)">
-    <textarea class="section-content-input" rows="8" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)">${escHtml(section.content||'')}</textarea>
+    <textarea class="section-content-input" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)">${escHtml(section.content||'')}</textarea>
   </div>`;
   const imgSlot = (slot) => {
     const img = section['image_'+slot] || section.image;
@@ -1835,7 +1709,6 @@ function updateSectionField(id, field, value) {
   s[field] = value;
   refreshPreview();
 }
-
 
 // ── SECTION ACTIONS ──
 function changeSectionType(id, type) {
