@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.5</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v4.6</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1583,8 +1583,11 @@ ZASADY OGÓLNE
 ${guidelinesBlock}
 
 Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy).
-WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wartości jako \\", nowe linie jako \\n.
-{"sections":[{"type":"TEXT_ONLY","heading":"Nagłówek","content":"Treść"}]}`;
+KRYTYCZNE ZASADY JSON:
+- Nowe linie w treści zapisuj jako \\n (dwa znaki: backslash + n), NIGDY nie wstawiaj prawdziwego Enter
+- Cudzysłowy wewnątrz wartości zapisuj jako \\", lub używaj polskich cudzysłowów „ "
+- Każda wartość musi być w jednej linii — content to jeden długi string z \\n zamiast Enterów
+{"sections":[{"type":"TEXT_ONLY","heading":"Nagłówek","content":"Linia 1\\nLinia 2\\nLinia 3"}]}`;
 
   // Strip emoji from source text before sending to AI
   const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}]/gu, '').replace(/  +/g, ' ');
@@ -1646,6 +1649,9 @@ WAŻNE: Upewnij się że JSON jest poprawny — escapuj cudzysłowy wewnątrz wa
 
     // Repair broken JSON
     function repairJSON(str) {
+      // Replace polish quotes with safe versions
+      str = str.replace(/\u201E/g, '\\"').replace(/\u201D/g, '\\"');
+      str = str.replace(/\u201C/g, '\\"').replace(/\u2018/g, "'").replace(/\u2019/g, "'");
       // Replace actual newlines/tabs inside string values with escaped versions
       let result = '';
       let inString = false;
