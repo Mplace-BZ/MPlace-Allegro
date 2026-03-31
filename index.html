@@ -799,7 +799,7 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.0</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.1</span>
     <span class="logo-sep">|</span>
     <span class="logo-date" id="topbarDate"></span>
   </div>
@@ -809,6 +809,7 @@ select.input-field { cursor: pointer; }
     <button class="nav-tab" id="guidelinesBtn" onclick="openGuidelines()" style="display:none;">Wiki</button>
     <button class="nav-tab" id="templateBtn" onclick="openTemplateModal()" style="display:none;">Szablon</button>
     <button class="nav-tab green" onclick="newAuction()">+ Nowa</button>
+    <button class="nav-tab" onclick="duplicateAuction()" title="Duplikuj aukcję jako bazę dla nowego produktu">⧉ Duplikuj</button>
     <div class="history-dropdown">
       <button class="nav-tab" onclick="toggleHistoryMenu()">Historia ▾</button>
       <div class="history-menu" id="historyMenu"></div>
@@ -1538,6 +1539,20 @@ function newAuction() {
   clearPreview();
   document.getElementById('toolbarLabel').textContent = 'Nowa aukcja';
   document.getElementById('exportBtn').style.display = 'none';
+}
+
+function duplicateAuction() {
+  if (state.sections.length === 0) { toast('Brak aukcji do zduplikowania', 'error'); return; }
+  const oldTitle = document.getElementById('auctionTitle').value || 'Bez tytułu';
+  state.activeAuction = null; // new auction, not overwriting old one
+  state.sections = JSON.parse(JSON.stringify(state.sections)).map(s => ({ ...s, id: 's' + Date.now() + Math.random() }));
+  document.getElementById('auctionTitle').value = oldTitle + ' (kopia)';
+  document.getElementById('sourceText').value = '';
+  updateCharCount();
+  renderSections();
+  refreshPreview();
+  document.getElementById('toolbarLabel').textContent = oldTitle + ' (kopia)';
+  toast('Aukcja zduplikowana — zmień treść źródłową i tytuł', 'success');
 }
 
 // ══════════════════════════════════════════════
