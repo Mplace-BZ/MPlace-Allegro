@@ -775,7 +775,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.2</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.3</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1774,7 +1774,11 @@ function triggerImageUpload(sectionId, slot) {
 
 function removeImage(sectionId, slot) {
   const s = state.sections.find(s => s.id === sectionId);
-  if (s) { delete s['image_'+slot]; renderSections(); refreshPreview(); }
+  if (s) {
+    delete s['image_'+slot];
+    if (s.image) delete s.image;
+    renderSections(); refreshPreview();
+  }
 }
 
 // ══════════════════════════════════════════════
