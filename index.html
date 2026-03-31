@@ -778,7 +778,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.2</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.3</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1832,6 +1832,8 @@ function createSectionCard(section, idx) {
       <span class="section-num">${idx+1}.</span>
       <select class="section-type-select" onchange="changeSectionType('${section.id}',this.value)">${opts}</select>
       <div class="section-actions">
+        <button class="icon-btn" onclick="regenerateSection('${section.id}')" title="Regeneruj sekcję wg Wiki">✦</button>
+        <button class="icon-btn" onclick="fixSection('${section.id}')" title="Popraw sekcję (sprawdź wg Wiki)">✓</button>
         <button class="icon-btn" onclick="moveSectionUp(${idx})" title="Wyżej">↑</button>
         <button class="icon-btn" onclick="moveSectionDown(${idx})" title="Niżej">↓</button>
         <button class="icon-btn" onclick="duplicateSection(${idx})" title="Duplikuj">⧉</button>
@@ -1916,6 +1918,139 @@ function duplicateSection(idx) {
   const copy = { ...JSON.parse(JSON.stringify(original)), id: 's' + Date.now() };
   state.sections.splice(idx + 1, 0, copy);
   renderSections(); refreshPreview();
+}
+
+// ── AI: REGENERATE / FIX SINGLE SECTION ──
+async function regenerateSection(sectionId) {
+  const s = state.sections.find(s => s.id === sectionId);
+  if (!s) return;
+  const sourceText = document.getElementById('sourceText').value.trim();
+  if (!sourceText) { toast('Brak treści źródłowej', 'error'); return; }
+
+  const guidelines = state.activeClient?.guidelines || '';
+  const prompt = `Jesteś copywriterem aukcji Allegro. Wygeneruj NOWĄ treść dla jednej sekcji aukcji.
+
+ZASADY:
+- Używaj WYŁĄCZNIE informacji z tekstu źródłowego — NIGDY nie wymyślaj treści medycznych
+- Gwiazdki (*) przy oświadczeniach EFSA są obowiązkowe
+- Formatuj: **pogrubienia** kluczowych fraz, bullet pointy z emoji z wytycznych
+- Nowe linie zapisuj jako \\n
+
+${guidelines ? 'WYTYCZNE MARKI:\n' + guidelines : ''}
+
+Sekcja do wygenerowania:
+- Typ: ${s.type}
+- Nagłówek: ${s.heading || '[wygeneruj nagłówek]'}
+
+Tekst źródłowy produktu:
+${sourceText}
+
+Odpowiedz WYŁĄCZNIE w formacie JSON (jedna linia, bez markdown):
+{"heading":"Nagłówek sekcji","content":"Treść sekcji z \\n jako nowe linie"}`;
+
+  await callAIForSection(sectionId, prompt, 'Regeneruję...');
+}
+
+async function fixSection(sectionId) {
+  const s = state.sections.find(s => s.id === sectionId);
+  if (!s || !s.content) { toast('Sekcja jest pusta', 'error'); return; }
+
+  const sourceText = document.getElementById('sourceText').value.trim();
+  const guidelines = state.activeClient?.guidelines || '';
+  const prompt = `Jesteś korektorem aukcji Allegro dla produktów medycznych. Sprawdź i popraw tę sekcję.
+
+SPRAWDŹ:
+1. Czy treść jest WYŁĄCZNIE z tekstu źródłowego (nic wymyślonego)?
+2. Czy oświadczenia EFSA mają gwiazdki (*) i pełne zastrzeżenie prawne?
+3. Czy nie ma duplikatów treści?
+4. Czy formatowanie jest poprawne (**pogrubienia**, bullet pointy z emoji z wytycznych)?
+5. Czy nagłówek jest KAPITALIKAMI z emoji wg wytycznych?
+
+${guidelines ? 'WYTYCZNE MARKI:\n' + guidelines : ''}
+
+${sourceText ? 'TEKST ŹRÓDŁOWY (do weryfikacji):\n' + sourceText : ''}
+
+OBECNA TREŚĆ SEKCJI:
+Nagłówek: ${s.heading}
+Treść: ${s.content}
+
+Popraw sekcję i zwróć WYŁĄCZNIE JSON (jedna linia, bez markdown):
+{"heading":"Poprawiony nagłówek","content":"Poprawiona treść z \\n jako nowe linie","changes":"Krótki opis co poprawiono"}
+
+Jeśli sekcja jest OK — zwróć ją bez zmian z changes: "Brak zmian — sekcja poprawna"`;
+
+  await callAIForSection(sectionId, prompt, 'Sprawdzam...');
+}
+
+async function callAIForSection(sectionId, prompt, statusMsg) {
+  const s = state.sections.find(s => s.id === sectionId);
+  if (!s) return;
+
+  setStatus('active', statusMsg);
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '', fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed?.delta?.text || '';
+          if (delta) fullText += delta;
+        } catch(e) {}
+      }
+    }
+
+    // Parse response
+    const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Brak odpowiedzi AI');
+
+    let result;
+    try {
+      result = JSON.parse(repairJSON(jsonMatch[0]));
+    } catch(e) {
+      // fallback
+      const hm = jsonMatch[0].match(/"heading"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      const cm = jsonMatch[0].match(/"content"\s*:\s*"([\s\S]*?)"\s*[,}]/);
+      result = { heading: hm?hm[1]:'', content: cm?cm[1]:'', changes: 'Odzyskano z fallback' };
+    }
+
+    if (result.heading !== undefined) s.heading = (result.heading||'').replace(/\\n/g, '\n');
+    if (result.content) s.content = (result.content||'').replace(/\\n/g, '\n');
+
+    renderSections();
+    refreshPreview();
+    setStatus('', 'Gotowy');
+
+    if (result.changes) {
+      toast(result.changes, result.changes.includes('Brak zmian') ? 'success' : 'success');
+    } else {
+      toast('Sekcja zaktualizowana', 'success');
+    }
+  } catch(err) {
+    console.error(err);
+    setStatus('error', 'Błąd: ' + err.message);
+    toast('Błąd: ' + err.message, 'error');
+  }
 }
 
 function addSection() {
