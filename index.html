@@ -780,7 +780,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.7</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v3.8</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1799,7 +1799,7 @@ function createSectionCard(section, idx) {
 function renderSectionBody(section) {
   const textCol = `<div class="section-col"><div class="col-label">Tekst</div>
     <input class="section-heading-input" value="${escAttr(section.heading||'')}" placeholder="Nagłówek sekcji…" onchange="updateSectionField('${section.id}','heading',this.value)" onblur="updateSectionField('${section.id}','heading',this.value)">
-    <textarea class="section-content-input" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)">${escHtml(section.content||'')}</textarea>
+    <textarea class="section-content-input" rows="8" placeholder="Treść sekcji…" onchange="updateSectionField('${section.id}','content',this.value)" onblur="updateSectionField('${section.id}','content',this.value)">${escHtml(section.content||'')}</textarea>
   </div>`;
   const imgSlot = (slot) => {
     const img = section['image_'+slot] || section.image;
