@@ -775,7 +775,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.1</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v2.2</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1475,10 +1475,10 @@ POGRUBIENIA (**tekst**):
 - Przykład: "**Układ odpornościowy** — wspiera zdrowie układu odpornościowego"
 
 ODSTĘPY I CZYTELNOŚĆ:
-- Dodawaj puste linie (\\n\\n) między akapitami i grupami bullet pointów
+- Bullet pointy pisz JEDEN POD DRUGIM bez pustych linii między nimi
+- Pustą linię (\\n\\n) dodawaj TYLKO między różnymi grupami/akapitami, NIE między poszczególnymi bullet pointami
 - Grupuj powiązane punkty pod pogrubionymi podtytułami
 - Krótkie akapity — max 2-3 zdania, potem nowa linia
-- Bullet pointy — jeden punkt = jedna linia, czytelnie
 
 GWIAZDKI (*) I ZASTRZEŻENIA:
 - USUŃ gwiazdki (*) z treści oświadczeń zdrowotnych
@@ -1781,7 +1781,7 @@ function removeImage(sectionId, slot) {
 // PREVIEW & EXPORT
 // ══════════════════════════════════════════════
 function generateAllegroHTML() {
-  const css = `<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#333;background:#fff}strong{font-weight:700;color:#222}.sec{width:100%}.sec-text{padding:20px 24px}.sec-text h2{font-size:17px;font-weight:700;margin-bottom:14px;color:#111}.sec-text p{font-size:13px;color:#444;margin-bottom:8px}.sec-text br{display:block;content:"";margin:6px 0}.row{display:flex;width:100%}.col-img{flex:0 0 50%}.col-img img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}.col-txt{flex:0 0 50%;padding:20px 24px}.img-only img{width:100%;max-height:400px;object-fit:cover;display:block}.ph{background:#f5f5f5;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;border:2px dashed #e0e0e0}.div{height:2px;background:#f0f0f0;margin:4px 0}.bullet{padding-left:6px;margin-bottom:6px}</style>`;
+  const css = `<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#333;background:#fff}strong{font-weight:700;color:#222}.sec{width:100%}.sec-text{padding:20px 24px}.sec-text h2{font-size:17px;font-weight:700;margin-bottom:10px;color:#111}.sec-text p{font-size:13px;color:#444;margin-bottom:4px}.sec-text .spacer{height:10px}.row{display:flex;width:100%}.col-img{flex:0 0 50%}.col-img img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}.col-txt{flex:0 0 50%;padding:20px 24px}.img-only img{width:100%;max-height:400px;object-fit:cover;display:block}.ph{background:#f5f5f5;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;border:2px dashed #e0e0e0}.div{height:2px;background:#f0f0f0;margin:4px 0}.bullet{padding-left:6px;margin-bottom:2px}</style>`;
 
   let body = '';
   state.sections.forEach((s, i) => {
@@ -1810,7 +1810,7 @@ function buildTextHTML(s) {
     let i = 0;
     while (i < lines.length) {
       const line = lines[i].trim();
-      if (!line) { h += '<br>'; i++; continue; }
+      if (!line) { h += '<div class="spacer"></div>'; i++; continue; }
       // Bullet points (◆, 🔹, ✅, •, -, ◈)
       const bulletMatch = line.match(/^(◆|🔹|✅|•|◈|-)\s*(.*)/);
       if (bulletMatch) {
