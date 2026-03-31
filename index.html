@@ -144,20 +144,48 @@ body {
 }
 .logo {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text2);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.logo strong { color: var(--text); font-weight: 700; font-size: 14px; }
+.logo-accent { color: var(--green); font-weight: 600; }
+.logo-sep { color: var(--text3); margin: 0 4px; }
+.logo-date { color: var(--text3); font-size: 11px; }
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  flex-wrap: nowrap;
+}
+.nav-tab {
+  padding: 5px 14px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-family: var(--mono);
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  background: transparent;
+  transition: all 0.15s;
   white-space: nowrap;
 }
-.logo-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+.nav-tab:hover { background: var(--bg3); color: var(--text); border-color: rgba(255,255,255,.2); }
+.nav-tab.green { border-color: rgba(45,212,160,.3); color: var(--green); }
+.nav-tab.green:hover { background: rgba(45,212,160,.1); }
+.sync-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
 }
-.logo strong { color: var(--text); font-weight: 600; }
 
 .topbar-right {
   margin-left: auto;
@@ -235,32 +263,30 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: 16px;
-  padding-left: 16px;
-  border-left: 1px solid var(--border2);
 }
 .topbar-client {
-  padding: 3px 10px;
+  padding: 5px 14px;
   border-radius: var(--radius);
   font-size: 11px;
   font-family: var(--mono);
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1px solid var(--border2);
   transition: all 0.15s;
   white-space: nowrap;
   color: var(--text2);
 }
-.topbar-client:hover { background: var(--bg3); }
+.topbar-client:hover { background: var(--bg3); color: var(--text); border-color: rgba(255,255,255,.2); }
 .topbar-client.active {
-  background: rgba(255,107,53,.1);
-  border-color: rgba(255,107,53,.3);
+  background: rgba(255,107,53,.12);
+  border-color: rgba(255,107,53,.4);
   color: var(--accent);
 }
 .topbar-client .tpl-dot { font-size: 8px; opacity: .5; margin-left: 2px; }
 .topbar-add-client {
-  padding: 3px 8px;
+  padding: 5px 10px;
   border-radius: var(--radius);
   font-size: 11px;
+  font-family: var(--mono);
   cursor: pointer;
   border: 1px dashed var(--border2);
   color: var(--text3);
@@ -272,18 +298,6 @@ body {
 .history-dropdown {
   position: relative;
 }
-.history-toggle {
-  padding: 3px 10px;
-  border-radius: var(--radius);
-  font-size: 11px;
-  font-family: var(--mono);
-  cursor: pointer;
-  border: 1px solid var(--border2);
-  color: var(--text2);
-  background: var(--bg3);
-  transition: all 0.15s;
-}
-.history-toggle:hover { border-color: var(--accent); }
 .history-menu {
   display: none;
   position: absolute;
@@ -784,25 +798,28 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v5.4</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span>
+    <span class="logo-sep">|</span>
+    <span class="logo-date" id="topbarDate"></span>
   </div>
-  <div class="topbar-clients" id="topbarClients"></div>
-  <div class="topbar-add-client" onclick="openAddClient()">+</div>
-  <button class="btn btn-ghost" id="guidelinesBtn" onclick="openGuidelines()" style="font-size:11px;padding:4px 10px;display:none;">Wiki</button>
-  <button class="btn btn-ghost" id="templateBtn" onclick="openTemplateModal()" style="font-size:11px;padding:4px 10px;display:none;">Szablon</button>
-  <div class="history-dropdown">
-    <div class="history-toggle" onclick="toggleHistoryMenu()">Historia ▾</div>
-    <div class="history-menu" id="historyMenu"></div>
+  <div class="topbar-nav">
+    <div class="topbar-clients" id="topbarClients"></div>
+    <div class="topbar-add-client" onclick="openAddClient()">+</div>
+    <button class="nav-tab" id="guidelinesBtn" onclick="openGuidelines()" style="display:none;">Wiki</button>
+    <button class="nav-tab" id="templateBtn" onclick="openTemplateModal()" style="display:none;">Szablon</button>
+    <button class="nav-tab green" onclick="newAuction()">+ Nowa</button>
+    <div class="history-dropdown">
+      <button class="nav-tab" onclick="toggleHistoryMenu()">Historia ▾</button>
+      <div class="history-menu" id="historyMenu"></div>
+    </div>
   </div>
-  <button class="btn btn-ghost" onclick="newAuction()" style="font-size:11px;padding:4px 10px;">+ Nowa</button>
   <div class="topbar-right">
-    <div class="sync-dot" id="syncDot" title="Synchronizacja"></div>
+    <span class="sync-label"><span class="sync-dot" id="syncDot"></span> <span id="syncText">Połączono</span></span>
     <div class="user-badge" id="userBadge">
       <div class="user-avatar" id="userAvatar">?</div>
       <span id="userName" style="font-size:12px;"></span>
     </div>
-    <button class="btn btn-ghost" onclick="signOut()" style="font-size:11px;padding:4px 10px;">Wyloguj</button>
+    <button class="nav-tab" onclick="signOut()">Wyloguj</button>
   </div>
 </div>
 
@@ -1012,6 +1029,10 @@ auth.onAuthStateChanged(user => {
     document.getElementById('mainTopbar').style.display = 'flex';
     document.getElementById('appMain').style.display = 'flex';
     renderUserBadge(user);
+    // Set date in topbar
+    const now = new Date();
+    const dateEl = document.getElementById('topbarDate');
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('pl-PL', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
     loadClients();
   } else {
     state.user = null;
@@ -1060,6 +1081,8 @@ function auctionsCol() {
 function setSyncState(s) {
   const dot = document.getElementById('syncDot');
   dot.className = 'sync-dot ' + s;
+  const txt = document.getElementById('syncText');
+  if (txt) txt.textContent = s === 'syncing' ? 'Zapisuję...' : s === 'synced' ? 'Połączono' : s === 'error' ? 'Błąd' : 'Połączono';
 }
 
 // ══════════════════════════════════════════════
