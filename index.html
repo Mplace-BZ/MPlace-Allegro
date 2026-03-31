@@ -720,6 +720,7 @@ select.input-field { cursor: pointer; }
         ✦ Generuj sekcje
       </button>
       <button class="btn btn-ghost" onclick="addSection()">+ Sekcja</button>
+      <button class="btn btn-ghost" id="saveTemplateBtn" onclick="saveTemplate()" style="display:none;">◈ Zapisz szablon</button>
       <div class="toolbar-right">
         <button class="btn btn-ghost" onclick="refreshPreview()">↻</button>
         <button class="btn btn-ghost" id="saveBtn" onclick="saveAuction()">Zapisz</button>
@@ -965,7 +966,7 @@ function renderClients() {
     el.onclick = () => selectClient(c.id);
     el.innerHTML = `
       <div class="client-avatar ${badgeClass}">${c.initials || c.name[0]}</div>
-      <div class="client-name">${c.name}</div>
+      <div class="client-name">${c.name}${c.template ? ' <span style="opacity:.4;font-size:9px;">◈</span>' : ''}</div>
       <div class="client-count">${getClientCount(c.id)}</div>
     `;
     list.appendChild(el);
@@ -981,6 +982,44 @@ function selectClient(id) {
   renderClients();
   renderHistory();
   updateClientDropdown();
+  updateTemplateBtn();
+}
+
+function updateTemplateBtn() {
+  const btn = document.getElementById('saveTemplateBtn');
+  btn.style.display = (state.sections.length > 0 && state.activeClient) ? 'inline-flex' : 'none';
+  if (state.activeClient?.template) {
+    btn.textContent = '◈ Aktualizuj szablon';
+  } else {
+    btn.textContent = '◈ Zapisz szablon';
+  }
+}
+
+async function saveTemplate() {
+  if (!state.activeClient || state.sections.length === 0) return;
+
+  const template = state.sections.map(s => ({
+    type: s.type,
+    heading: s.heading || '',
+    hasContent: !!(s.content && s.content.trim()),
+  }));
+
+  setSyncState('syncing');
+  try {
+    await clientsCol().doc(state.activeClient.id).update({ template });
+    state.activeClient.template = template;
+    // Update in state.clients array too
+    const idx = state.clients.findIndex(c => c.id === state.activeClient.id);
+    if (idx >= 0) state.clients[idx].template = template;
+    setSyncState('synced');
+    renderClients();
+    updateTemplateBtn();
+    toast(`Szablon zapisany (${template.length} sekcji)`, 'success');
+  } catch(e) {
+    console.error(e);
+    setSyncState('error');
+    toast('Błąd zapisu szablonu: ' + e.message, 'error');
+  }
 }
 
 function selectClientFromDropdown() {
@@ -1174,6 +1213,17 @@ async function generateSections() {
   setStatus('active', 'Analizuję treść...');
   document.getElementById('generateBtn').disabled = true;
 
+  // Build template instruction if client has one
+  let templateInstruction = '';
+  if (state.activeClient?.template) {
+    const tpl = state.activeClient.template;
+    templateInstruction = `\n\nKLIENT MA ZAPISANY SZABLON — MUSISZ go dokładnie odwzorować.
+Szablon sekcji (w tej kolejności):
+${tpl.map((s, i) => `${i+1}. type: "${s.type}", heading: "${s.heading}"`).join('\n')}
+
+Użyj DOKŁADNIE tych typów sekcji i nagłówków. Wypełnij treścią z wklejonego tekstu produktu. Jeśli w szablonie jest nagłówek — zachowaj jego styl, ale dostosuj do nowego produktu.`;
+  }
+
   const systemPrompt = `Jesteś ekspertem od tworzenia aukcji Allegro. Analizujesz treść produktu i dzielisz ją na sekcje zgodnie z dostępnymi layoutami Allegro.
 
 Dostępne typy sekcji:
@@ -1190,6 +1240,7 @@ Zasady:
 4. Sposób użycia: TEXT_ONLY
 5. Minimum 6 sekcji
 6. Punkty listy formatuj jako: ◆ treść punktu
+${templateInstruction}
 
 Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
 {"sections":[{"type":"TEXT_ONLY","heading":"Nagłówek","content":"Treść"}]}`;
@@ -1263,6 +1314,7 @@ Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez komentarzy):
 
     renderSections();
     refreshPreview();
+    updateTemplateBtn();
     setStatus('', 'Gotowy');
     toast(`Wygenerowano ${state.sections.length} sekcji`, 'success');
 
