@@ -294,26 +294,9 @@ body {
 }
 .topbar-add-client:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── TOPBAR HISTORY DROPDOWN ── */
-.history-dropdown {
-  position: relative;
-}
-.history-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius2);
-  width: 280px;
-  max-height: 320px;
-  overflow-y: auto;
-  z-index: 200;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-}
-.history-menu.open { display: block; }
+/* ── HISTORY (now unused dropdown styles kept for compat) ── */
+.history-dropdown { position: relative; }
+.history-menu { display: none; }
 .history-menu .history-item {
   padding: 8px 10px;
   cursor: pointer;
@@ -799,7 +782,7 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.2</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.3</span>
     <span class="logo-sep">|</span>
     <span class="logo-date" id="topbarDate"></span>
   </div>
@@ -810,10 +793,7 @@ select.input-field { cursor: pointer; }
     <button class="nav-tab" id="templateBtn" onclick="openTemplateModal()" style="display:none;">Szablon</button>
     <button class="nav-tab green" onclick="newAuction()">+ Nowa</button>
     <button class="nav-tab" onclick="duplicateAuction()" title="Duplikuj aukcję jako bazę dla nowego produktu">⧉ Duplikuj</button>
-    <div class="history-dropdown">
-      <button class="nav-tab" onclick="toggleHistoryMenu()">Historia ▾</button>
-      <div class="history-menu" id="historyMenu"></div>
-    </div>
+    <button class="nav-tab" onclick="openModal('historyModal')">Historia</button>
   </div>
   <div class="topbar-right">
     <span class="sync-label"><span class="sync-dot" id="syncDot"></span> <span id="syncText">Połączono</span></span>
@@ -958,6 +938,17 @@ select.input-field { cursor: pointer; }
       <button class="btn btn-ghost" onclick="closeModal('guidelinesModal')">Anuluj</button>
       <button class="btn btn-primary" onclick="saveGuidelines()">Zapisz wytyczne</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: HISTORY -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="modal-title" style="margin-bottom:0;">Historia aukcji</div>
+      <button class="btn btn-ghost" onclick="closeModal('historyModal')" style="font-size:14px;padding:2px 8px;">✕</button>
+    </div>
+    <div id="historyModalList" style="overflow-y:auto;max-height:60vh;display:flex;flex-direction:column;gap:4px;"></div>
   </div>
 </div>
 
@@ -1396,33 +1387,37 @@ function subscribeHistory() {
 }
 
 function renderHistory() {
-  const list = document.getElementById('historyMenu');
+  const list = document.getElementById('historyModalList');
+  if (!list) return;
   const filtered = state.activeClient
     ? state.history.filter(h => h.clientId === state.activeClient.id)
     : state.history;
 
   list.innerHTML = '';
   if (filtered.length === 0) {
-    list.innerHTML = '<div style="padding:14px 12px;font-size:11px;color:var(--text3);text-align:center;">Brak aukcji</div>';
+    list.innerHTML = '<div style="padding:20px;font-size:12px;color:var(--text3);text-align:center;">Brak aukcji</div>';
     return;
   }
 
   filtered.forEach(h => {
     const client = state.clients.find(c => c.id === h.clientId);
     const badgeClass = client?.group ? `g-${client.group.toLowerCase()}-badge` : '';
+    const isActive = state.activeAuction?.id === h.id;
     const el = document.createElement('div');
-    el.className = 'history-item' + (state.activeAuction?.id === h.id ? ' active' : '');
-    el.onclick = () => { loadAuction(h.id); toggleHistoryMenu(); };
+    el.style.cssText = `display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius);border:1px solid ${isActive ? 'rgba(255,107,53,.3)' : 'var(--border)'};background:${isActive ? 'rgba(255,107,53,.07)' : 'var(--bg3)'};cursor:pointer;transition:all .15s;`;
+    el.onmouseover = () => { if(!isActive) el.style.background='var(--bg)'; };
+    el.onmouseout = () => { if(!isActive) el.style.background='var(--bg3)'; };
+    el.onclick = () => { loadAuction(h.id); closeModal('historyModal'); };
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:start;">
-        <div class="history-title" style="flex:1;">${h.title || 'Bez tytułu'}</div>
-        <button onclick="event.stopPropagation();deleteAuction('${h.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0 4px;opacity:.5;" title="Usuń aukcję">✕</button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);">${h.title || 'Bez tytułu'}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px;display:flex;gap:8px;align-items:center;">
+          ${client ? `<span class="${badgeClass}" style="padding:1px 6px;border-radius:3px;font-size:9px;">${client.name}</span>` : ''}
+          <span>${formatDate(h.updatedAt)}</span>
+          <span>${(h.sections||[]).length} sekcji</span>
+        </div>
       </div>
-      <div class="history-meta">
-        ${client ? `<span class="history-client ${badgeClass}" style="padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:9px;">${client.initials||client.name}</span>` : ''}
-        <span>${formatDate(h.updatedAt)}</span>
-        <span>${(h.sections||[]).length} sek.</span>
-      </div>
+      <button onclick="event.stopPropagation();deleteAuction('${h.id}')" class="icon-btn danger" title="Usuń" style="flex-shrink:0;">✕</button>
     `;
     list.appendChild(el);
   });
@@ -1448,19 +1443,7 @@ async function deleteAuction(id) {
   }
 }
 
-function toggleHistoryMenu() {
-  document.getElementById('historyMenu').classList.toggle('open');
-}
-
-// Close history menu on outside click (delayed to allow item click)
-document.addEventListener('click', e => {
-  setTimeout(() => {
-    const dd = document.querySelector('.history-dropdown');
-    if (dd && !dd.contains(e.target)) {
-      document.getElementById('historyMenu')?.classList.remove('open');
-    }
-  }, 100);
-});
+// History is now a modal — no dropdown needed
 
 function formatDate(ts) {
   if (!ts) return '';
