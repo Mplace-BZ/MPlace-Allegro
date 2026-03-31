@@ -740,7 +740,7 @@ select.input-field { cursor: pointer; }
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
     <div class="logo-dot"></div>
-    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.5</span>
+    <strong>MPlace</strong> &nbsp;/ Generator Aukcji <span style="opacity:.4;font-size:10px;">v1.6</span>
   </div>
   <div class="topbar-clients" id="topbarClients"></div>
   <div class="topbar-add-client" onclick="openAddClient()">+</div>
@@ -1035,9 +1035,28 @@ function renderClients() {
     const el = document.createElement('div');
     el.className = 'topbar-client' + (state.activeClient?.id === c.id ? ' active' : '');
     el.onclick = () => selectClient(c.id);
+    el.oncontextmenu = (e) => { e.preventDefault(); deleteClient(c.id, c.name); };
+    el.title = 'PPM = usuń klienta';
     el.innerHTML = `${c.name}${c.guidelines ? '<span class="tpl-dot">◈</span>' : ''}`;
     bar.appendChild(el);
   });
+}
+
+async function deleteClient(id, name) {
+  if (!confirm(`Usunąć klienta "${name}"?`)) return;
+  setSyncState('syncing');
+  try {
+    await clientsCol().doc(id).delete();
+    state.clients = state.clients.filter(c => c.id !== id);
+    if (state.activeClient?.id === id) state.activeClient = null;
+    renderClients();
+    updateClientDropdown();
+    setSyncState('synced');
+    toast(`Klient "${name}" usunięty`, 'success');
+  } catch(e) {
+    setSyncState('error');
+    toast('Błąd usuwania: ' + e.message, 'error');
+  }
 }
 
 function getClientCount(id) {
