@@ -782,7 +782,7 @@ select.input-field { cursor: pointer; }
 <!-- ══ TOPBAR ══ -->
 <div class="topbar" id="mainTopbar" style="display:none;">
   <div class="logo">
-    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.5</span>
+    <strong>MPlace</strong> <span class="logo-accent">Allegro</span> <span style="font-size:11px;color:#e8eaf0;opacity:.6;">v6.6</span>
     <span class="logo-sep">|</span>
     <span class="logo-date" id="topbarDate"></span>
   </div>
@@ -834,11 +834,11 @@ select.input-field { cursor: pointer; }
           <span class="panel-title">Treść źródłowa</span>
           <button class="icon-btn" onclick="clearInput()">✕</button>
         </div>
-        <div class="input-meta">
-          <input type="text" class="input-field" id="auctionTitle" placeholder="Nazwa aukcji…" style="flex:2;">
-          <select class="input-field" id="clientSelect" style="flex:1;" onchange="selectClientFromDropdown()">
+        <div class="input-meta" style="flex-direction:column;gap:6px;">
+          <select class="input-field" id="clientSelect" onchange="selectClientFromDropdown()">
             <option value="">Klient…</option>
           </select>
+          <input type="text" class="input-field" id="auctionTitle" placeholder="Nazwa aukcji…">
         </div>
         <div class="textarea-wrap">
           <div class="sidebar-label">Wklej treść produktu</div>
